@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docs.powerhub.example/contracts/mqtt/telemetry.v1.schema.json",
+  "title": "Device telemetry",
+  "description": "Published by a device to powerhub/v1/devices/{deviceId}/telemetry.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "messageId",
+    "deviceId",
+    "observedAt",
+    "data",
+    "provenance"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "description": "Major contract version. Unknown versions are rejected."
+    },
+    "messageId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "description": "Unique per message; the ingestion deduplication key."
+    },
+    "deviceId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "description": "Must equal the device id in the topic and the authenticated identity."
+    },
+    "observedAt": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$",
+      "description": "Device observation time in UTC (ISO 8601, Z suffix)."
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic per device session when the device supports it."
+    },
+    "data": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 32,
+      "propertyNames": {
+        "pattern": "^[a-z][A-Za-z0-9]{0,39}$"
+      },
+      "additionalProperties": {
+        "type": "number"
+      },
+      "description": "Measurements keyed by name with the unit as suffix, for example powerW."
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "origin"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "origin": {
+          "enum": [
+            "real_replay",
+            "live_external",
+            "synthetic"
+          ]
+        },
+        "dataset": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Replay only."
+        },
+        "sourceRow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Replay only; an opaque reference into the dataset."
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

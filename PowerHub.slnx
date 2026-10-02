@@ -10,4 +10,7 @@
     <Project Path="src/services/identity/PowerHub.Identity/PowerHub.Identity.csproj" />
     <Project Path="src/services/identity/PowerHub.Identity.Tests/PowerHub.Identity.Tests.csproj" />
   </Folder>
+  <Folder Name="/tests/contract/">
+    <Project Path="tests/contract/PowerHub.Contracts.Tests/PowerHub.Contracts.Tests.csproj" />
+  </Folder>
 </Solution>
