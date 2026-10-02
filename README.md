@@ -4,7 +4,7 @@ PowerHub is a web-based IoT device and energy management platform. It brings dev
 
 ## Project Status
 
-The PowerHub V2 documentation baseline is complete. V2 implementation has not started, and the existing application is a legacy prototype, not a production-ready implementation of the target architecture.
+The V2 documentation baseline is complete and implementation has started. The engineering foundation (Phase 1, local and CI parts) and the Identity vertical slice (Phase 2) exist in `src/`. Device, Telemetry, and Notification services are not built yet, and nothing has been deployed to a cluster. The original application is preserved under `legacy/` as a prototype reference only.
 
 Start with the [documentation portal](docs/README.md) for the product purpose, requirements, architecture, and delivery plan. Review the remaining decisions before starting the next implementation phase.
 
@@ -80,14 +80,43 @@ All V2 documentation is written in English.
 
 ## Repository State
 
-The current repository contains the legacy application:
+| Path | Content |
+| --- | --- |
+| `src/services/identity/` | [Identity Service](src/services/identity/README.md) and its tests |
+| `src/building-blocks/` | Shared technical defaults: logging, OpenTelemetry, Problem Details, health |
+| `src/frontend/` | React session shell: registration, sign-in, recovery, account, user administration |
+| `contracts/openapi/` | OpenAPI documents generated from the services |
+| `deploy/compose/` | Local environment |
+| `deploy/kubernetes/` | [Kustomize base and overlays](deploy/kubernetes/README.md), not yet applied to a cluster |
+| `docs/` | Requirements, architecture, decisions, and runbooks |
+| `legacy/` | The original prototype. Not built, not deployed, and not a specification |
 
-- `backend/`: the existing .NET solution.
-- `frontend/`: the existing web application.
-- `AI_services/`: legacy Python service dependencies.
-- `docs/`: the V2 design and requirement baseline.
+The layout follows the [target repository structure](docs/architecture/repository-structure.md).
 
-This is not the proposed V2 service layout. See the [target repository structure](docs/architecture/repository-structure.md) before creating new implementation projects.
+## Run Locally
+
+Docker is the only prerequisite.
+
+```sh
+cd deploy/compose
+cp .env.example .env
+docker compose up --build
+```
+
+- Web application: <http://localhost:8080>
+- Captured email (confirmation and reset links): <http://localhost:8025>
+
+Create an administrator:
+
+```sh
+docker compose exec -e POWERHUB_ADMIN_PASSWORD='<at least 12 characters>' identity   dotnet PowerHub.Identity.dll create-admin admin@example.test
+```
+
+Run the checks without installing SDKs:
+
+```sh
+POWERHUB_DOCKER_NETWORK=powerhub_default POWERHUB_TEST_POSTGRES="Host=postgres;Username=postgres;Password=postgres_local"   scripts/dotnet.sh test --solution PowerHub.slnx
+```
 
 Historical screenshots are preserved in the [legacy prototype gallery](docs/product/legacy-prototype-gallery.md). Older README content remains available in Git history.
 
@@ -95,13 +124,10 @@ Historical screenshots are preserved in the [legacy prototype gallery](docs/prod
 
 Follow the [implementation plan](docs/roadmap/implementation-plan.md):
 
-1. Review the documentation baseline and assign delivery and operational owners.
-2. Resolve the cloud, managed PostgreSQL, MQTT broker, ingress, secret manager, registry, and observability choices.
-3. Approve workload assumptions, capacity objectives, retention, and recovery objectives.
-4. Create a requirement-linked backlog and select the first vertical slice.
-5. Build the engineering and platform foundation, then deliver Identity and subsequent end-to-end slices.
-
-Generated OpenAPI and message schemas, executable deployment commands, and production verification evidence will be added with the corresponding implementation. There is no V2 quick-start or automated test suite yet.
+1. Review and accept [ADR 0011](docs/adr/0011-browser-session-transport.md), which records the choices made while building the Identity slice.
+2. Resolve the cloud, managed PostgreSQL, ingress, secret manager, registry, and observability choices, then provision staging. Phase 1 and Phase 2 exit criteria require a staging deployment and are not met until then.
+3. Choose the MQTT broker and device identity mechanism, then start Phase 3: Device inventory and MQTT ingestion.
+4. Approve workload assumptions, capacity objectives, retention, and recovery objectives.
 
 ## Contributing
 
