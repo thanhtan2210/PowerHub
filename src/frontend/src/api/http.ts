@@ -24,6 +24,8 @@ const messages: Record<string, string> = {
   'email-not-confirmed': 'Confirm your email address before signing in. Check your inbox for the link.',
   'invalid-token': 'This link is invalid or has expired. Request a new one.',
   conflict: 'That action is not allowed.',
+  forbidden: 'Your access to this device does not allow that action.',
+  'precondition-failed': 'This device was changed somewhere else. The list was refreshed; try again.',
   'not-found': 'That item no longer exists.',
 };
 
