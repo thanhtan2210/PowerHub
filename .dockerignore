@@ -1,0 +1,17 @@
+**/.git
+**/.vs
+**/.vscode
+**/artifacts
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/coverage
+**/TestResults
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+docs
+legacy
+deploy/kubernetes
