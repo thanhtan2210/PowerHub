@@ -47,8 +47,11 @@ The implemented contract is generated to [`contracts/openapi/identity.json`](../
 | `GET` | `/api/v1/devices/{deviceId}/state` | Read desired and latest reported state |
 | `POST` | `/api/v1/devices/{deviceId}/commands` | Submit an idempotent device command |
 | `GET` | `/api/v1/devices/{deviceId}/commands/{commandId}` | Read command delivery and outcome state |
+| `POST` | `/api/v1/devices/{deviceId}/credentials` | Rotate the device credential; the new value is returned once |
 | `GET`, `POST` | `/api/v1/schedules` | List or create automation schedules |
 | `GET`, `PATCH`, `DELETE` | `/api/v1/schedules/{scheduleId}` | Read or modify a schedule |
+
+Implemented so far: device registration, listing, read, rename, removal, and credential rotation, generated to [`contracts/openapi/device.json`](../../contracts/openapi/device.json). Locations, state, commands, and schedules are not built yet.
 
 ## Telemetry Service
 

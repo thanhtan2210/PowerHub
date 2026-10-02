@@ -4,7 +4,7 @@ PowerHub is a web-based IoT device and energy management platform. It brings dev
 
 ## Project Status
 
-The V2 documentation baseline is complete and implementation has started. The engineering foundation (Phase 1, local and CI parts) and the Identity vertical slice (Phase 2) exist in `src/`. Device, Telemetry, and Notification services are not built yet, and nothing has been deployed to a cluster. The original application is preserved under `legacy/` as a prototype reference only.
+The V2 documentation baseline is complete and implementation has started. The engineering foundation (Phase 1, local and CI parts), the Identity vertical slice (Phase 2), and the device inventory part of Phase 3 exist in `src/`. MQTT, Telemetry, and Notification are not built yet, and nothing has been deployed to a cluster. The original application is preserved under `legacy/` as a prototype reference only.
 
 Start with the [documentation portal](docs/README.md) for the product purpose, requirements, architecture, and delivery plan. Review the remaining decisions before starting the next implementation phase.
 
@@ -83,8 +83,9 @@ All V2 documentation is written in English.
 | Path | Content |
 | --- | --- |
 | `src/services/identity/` | [Identity Service](src/services/identity/README.md) and its tests |
-| `src/building-blocks/` | Shared technical defaults: logging, OpenTelemetry, Problem Details, health |
-| `src/frontend/` | React session shell: registration, sign-in, recovery, account, user administration |
+| `src/services/device/` | [Device Service](src/services/device/README.md) and its tests |
+| `src/building-blocks/` | Shared technical defaults: logging, OpenTelemetry, Problem Details, health, token verification |
+| `src/frontend/` | React application: registration, sign-in, recovery, account, devices, user administration |
 | `contracts/openapi/` | OpenAPI documents generated from the services |
 | `deploy/compose/` | Local environment |
 | `deploy/kubernetes/` | [Kustomize base and overlays](deploy/kubernetes/README.md), not yet applied to a cluster |
@@ -124,9 +125,9 @@ Historical screenshots are preserved in the [legacy prototype gallery](docs/prod
 
 Follow the [implementation plan](docs/roadmap/implementation-plan.md):
 
-1. Review and accept [ADR 0011](docs/adr/0011-browser-session-transport.md), which records the choices made while building the Identity slice.
+1. Review and accept [ADR 0011](docs/adr/0011-browser-session-transport.md) and [ADR 0012](docs/adr/0012-service-token-verification.md), which record the choices made while building the Identity and Device slices.
 2. Resolve the cloud, managed PostgreSQL, ingress, secret manager, registry, and observability choices, then provision staging. Phase 1 and Phase 2 exit criteria require a staging deployment and are not met until then.
-3. Choose the MQTT broker and device identity mechanism, then start Phase 3: Device inventory and MQTT ingestion.
+3. Continue Phase 3: add the MQTT boundary (Eclipse Mosquitto locally, per-device credentials and topic ACL), the Virtual Device Simulator, and Telemetry ingestion.
 4. Approve workload assumptions, capacity objectives, retention, and recovery objectives.
 
 ## Contributing
