@@ -1,0 +1,75 @@
+name: Images
+
+# Publishes the deployable images for every commit on main. Deployments reference the
+# digests printed in the job summary, never a mutable tag (INF-006).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: images-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - name: identity
+            context: .
+            dockerfile: src/services/identity/Dockerfile
+          - name: device
+            context: .
+            dockerfile: src/services/device/Dockerfile
+          - name: frontend
+            context: src/frontend
+            dockerfile: src/frontend/Dockerfile
+    steps:
+      - uses: actions/checkout@v5
+      - name: Resolve image name
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/powerhub-${{ matrix.name }}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      # Build stages run on the runner's architecture and runtime stages only copy files,
+      # so the arm64 image needs no emulation.
+      - name: Build for scanning
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          load: true
+          tags: ${{ steps.image.outputs.name }}:scan
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,scope=${{ matrix.name }},mode=max
+      - name: Scan image for Critical and High vulnerabilities
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ steps.image.outputs.name }}:scan
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+      - name: Report digest
+        run: echo "\`${{ steps.image.outputs.name }}@${{ steps.push.outputs.digest }}\`" >> "$GITHUB_STEP_SUMMARY"
