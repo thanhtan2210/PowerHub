@@ -13,12 +13,13 @@ var generatingOpenApi = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocum
 builder.AddPowerHubServiceDefaults(
     "device-service",
     tracing => tracing.AddNpgsql(),
-    metrics => metrics.AddMeter("Npgsql"));
+    metrics => metrics.AddMeter("Npgsql").AddMeter(MqttAuthMetrics.MeterName));
 builder.AddPowerHubJwtBearer(validateOnStart: !generatingOpenApi);
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ChangeRecorder>();
+builder.Services.AddSingleton<MqttAuthMetrics>();
 
 builder.Services.AddDbContext<DeviceDb>(options => options
     .UseNpgsql(builder.Configuration.GetConnectionString("DeviceDb"))
@@ -53,6 +54,7 @@ app.UseAuthorization();
 
 app.MapPowerHubHealthEndpoints();
 app.MapDeviceEndpoints();
+app.MapMqttAuthEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
