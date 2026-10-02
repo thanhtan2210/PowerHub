@@ -1,0 +1,144 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: device
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: device-config
+data:
+  ASPNETCORE_HTTP_PORTS: "8080"
+  ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+  # Public keys come straight from the Identity Service inside the cluster.
+  Auth__JwksUrl: http://identity/.well-known/jwks.json
+  # Overlays set Auth__Issuer to the public origin Identity signs for.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: device
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: device
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: device
+    spec:
+      serviceAccountName: device
+      terminationGracePeriodSeconds: 40
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: device
+          image: powerhub/device
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: device-config
+          env:
+            - name: ConnectionStrings__DeviceDb
+              valueFrom:
+                secretKeyRef:
+                  name: device-secrets
+                  key: runtime-connection-string
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          startupProbe:
+            httpGet: { path: /health/startup, port: http }
+            periodSeconds: 2
+            failureThreshold: 30
+          readinessProbe:
+            httpGet: { path: /health/ready, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 100m, memory: 192Mi }
+            limits: { cpu: "1", memory: 384Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: device
+spec:
+  selector:
+    app.kubernetes.io/name: device
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: device
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: device
+---
+# Runs before each rollout with the schema-owning credential (INF-MIG-001, INF-MIG-002).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: device-migrate
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: device-migrate
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: powerhub/device
+          args: ["migrate"]
+          env:
+            - name: ConnectionStrings__DeviceDb
+              valueFrom:
+                secretKeyRef:
+                  name: device-secrets
+                  key: migrator-connection-string
+            - name: Auth__JwksUrl
+              value: http://not-used-by-migration.invalid
+            - name: Auth__Issuer
+              value: https://not-used-by-migration.invalid
+          resources:
+            requests: { cpu: 100m, memory: 192Mi }
+            limits: { cpu: "1", memory: 384Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]

@@ -11,6 +11,9 @@ images:
   - name: powerhub/identity
     newName: registry.invalid/powerhub/identity
     newTag: unset
+  - name: powerhub/device
+    newName: registry.invalid/powerhub/device
+    newTag: unset
   - name: powerhub/frontend
     newName: registry.invalid/powerhub/frontend
     newTag: unset
@@ -22,6 +25,11 @@ configMapGenerator:
       - ASPNETCORE_ENVIRONMENT=Staging
       - Jwt__Issuer=https://staging.powerhub.invalid
       - Email__FrontendBaseUrl=https://staging.powerhub.invalid
+  - name: device-config
+    behavior: merge
+    literals:
+      - ASPNETCORE_ENVIRONMENT=Staging
+      - Auth__Issuer=https://staging.powerhub.invalid
 
 patches:
   - target: { kind: Ingress, name: powerhub }
@@ -35,6 +43,11 @@ patches:
           - hosts: [staging.powerhub.invalid]
             secretName: powerhub-tls
   - target: { kind: Deployment, name: identity }
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+  - target: { kind: Deployment, name: device }
     patch: |-
       - op: replace
         path: /spec/replicas

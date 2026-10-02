@@ -24,3 +24,4 @@ SQL
 }
 
 create_service_database identity "$IDENTITY_MIGRATOR_PASSWORD" "$IDENTITY_SVC_PASSWORD"
+create_service_database device "$DEVICE_MIGRATOR_PASSWORD" "$DEVICE_SVC_PASSWORD"
