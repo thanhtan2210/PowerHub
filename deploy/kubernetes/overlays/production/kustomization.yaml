@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: powerhub
+resources:
+  - namespace.yaml
+  - ../../base
+
+# Promotion sets the exact digests that passed staging (CICD-004).
+images:
+  - name: powerhub/identity
+    newName: registry.invalid/powerhub/identity
+    newTag: unset
+  - name: powerhub/frontend
+    newName: registry.invalid/powerhub/frontend
+    newTag: unset
+
+configMapGenerator:
+  - name: identity-config
+    behavior: merge
+    literals:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - Jwt__Issuer=https://powerhub.invalid
+      - Email__FrontendBaseUrl=https://powerhub.invalid
+
+patches:
+  - target: { kind: Ingress, name: powerhub }
+    patch: |-
+      - op: add
+        path: /spec/tls
+        value:
+          - hosts: [powerhub.invalid]
+            secretName: powerhub-tls

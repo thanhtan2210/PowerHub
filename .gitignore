@@ -1,3 +1,33 @@
-.vscode
-**/appsettings.Development.json
-**/appsettings.json
+# Build output
+artifacts/
+bin/
+obj/
+dist/
+coverage/
+TestResults/
+
+# Dependencies and caches
+node_modules/
+__pycache__/
+*.pyc
+.vite/
+
+# IDE and OS
+.vs/
+.vscode/
+.idea/
+*.user
+.DS_Store
+Thumbs.db
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+appsettings.Local.json
+legacy/**/appsettings.Development.json
+
+# Logs
+*.log

@@ -1,0 +1,87 @@
+# Only public route families are listed. /health/*, /internal/*, and /openapi are never
+# exposed (NFR-SEC-019). The ingress class, host, and TLS secret are set per overlay.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: powerhub
+spec:
+  rules:
+    - host: powerhub.invalid
+      http:
+        paths:
+          - path: /api/v1/auth
+            pathType: Prefix
+            backend: { service: { name: identity, port: { name: http } } }
+          - path: /api/v1/users
+            pathType: Prefix
+            backend: { service: { name: identity, port: { name: http } } }
+          - path: /.well-known/jwks.json
+            pathType: Exact
+            backend: { service: { name: identity, port: { name: http } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: frontend, port: { name: http } } }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+---
+# Web-facing pods accept traffic only from the ingress controller namespace, which each
+# overlay labels with powerhub.io/ingress=true.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-ingress
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values: [identity, frontend]
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              powerhub.io/ingress: "true"
+      ports:
+        - { protocol: TCP, port: 8080 }
+---
+# Identity reaches managed PostgreSQL, SMTP submission, and the OTLP collector. Overlays
+# should narrow the destination to the provider's address range once it is chosen.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: identity-egress
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values: [identity, identity-migrate]
+  policyTypes: [Egress]
+  egress:
+    - ports:
+        - { protocol: TCP, port: 5432 }
+        - { protocol: TCP, port: 587 }
+        - { protocol: TCP, port: 4317 }

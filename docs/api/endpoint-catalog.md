@@ -20,12 +20,21 @@ This catalog defines intended resource ownership and API shape. Exact request an
 
 | Method | Path | Intent |
 | --- | --- | --- |
+| `POST` | `/api/v1/auth/register` | Register a standard User; response does not disclose account existence |
+| `POST` | `/api/v1/auth/email/confirm` | Confirm the email address with a one-time proof |
 | `POST` | `/api/v1/auth/sign-in` | Authenticate and issue tokens |
 | `POST` | `/api/v1/auth/refresh` | Rotate a valid refresh token |
 | `POST` | `/api/v1/auth/sign-out` | Revoke the current refresh session |
+| `POST` | `/api/v1/auth/sign-out-all` | Revoke every refresh session of the caller |
 | `POST` | `/api/v1/auth/recovery/request` | Start account recovery without disclosing account existence |
 | `POST` | `/api/v1/auth/recovery/complete` | Complete recovery with a valid one-time proof |
-| `GET` | `/api/v1/users/me` | Return the authenticated profile and effective permissions |
+| `GET`, `PATCH` | `/api/v1/users/me` | Return or update the authenticated profile and effective permissions |
+| `POST` | `/api/v1/users/me/password` | Change the password after validating the current one |
+| `GET` | `/api/v1/users` | Administrator search with cursor pagination |
+| `POST` | `/api/v1/users/{userId}/disable`, `/reactivate` | Administrator account state changes |
+| `GET` | `/.well-known/jwks.json` | Public signing keys for token verification |
+
+The implemented contract is generated to [`contracts/openapi/identity.json`](../../contracts/openapi/identity.json).
 
 ## Device Service
 

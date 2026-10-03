@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/building-blocks/">
+    <Project Path="src/building-blocks/PowerHub.ServiceDefaults/PowerHub.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/services/identity/">
+    <Project Path="src/services/identity/PowerHub.Identity/PowerHub.Identity.csproj" />
+    <Project Path="src/services/identity/PowerHub.Identity.Tests/PowerHub.Identity.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,46 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: powerhub-staging
+resources:
+  - namespace.yaml
+  - ../../base
+
+# The pipeline replaces these with immutable digests (INF-006):
+#   kustomize edit set image powerhub/identity=<registry>/identity@sha256:...
+images:
+  - name: powerhub/identity
+    newName: registry.invalid/powerhub/identity
+    newTag: unset
+  - name: powerhub/frontend
+    newName: registry.invalid/powerhub/frontend
+    newTag: unset
+
+configMapGenerator:
+  - name: identity-config
+    behavior: merge
+    literals:
+      - ASPNETCORE_ENVIRONMENT=Staging
+      - Jwt__Issuer=https://staging.powerhub.invalid
+      - Email__FrontendBaseUrl=https://staging.powerhub.invalid
+
+patches:
+  - target: { kind: Ingress, name: powerhub }
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: staging.powerhub.invalid
+      - op: add
+        path: /spec/tls
+        value:
+          - hosts: [staging.powerhub.invalid]
+            secretName: powerhub-tls
+  - target: { kind: Deployment, name: identity }
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+  - target: { kind: Deployment, name: frontend }
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1

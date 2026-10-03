@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17.11-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 3s --health-retries 20
+    env:
+      POWERHUB_TEST_POSTGRES: Host=localhost;Port=5432;Username=postgres;Password=postgres
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - run: dotnet restore PowerHub.slnx --locked-mode
+      - run: dotnet format PowerHub.slnx --verify-no-changes --no-restore
+      - run: dotnet build PowerHub.slnx --no-restore
+      - name: Published OpenAPI contract matches the implementation
+        run: git diff --exit-code -- contracts/
+      - run: dotnet test --solution PowerHub.slnx --no-build --coverage --coverage-output-format cobertura
+      - name: No known-vulnerable packages
+        run: |
+          dotnet list PowerHub.slnx package --vulnerable --include-transitive | tee vulnerable.txt
+          ! grep -q "has the following vulnerable packages" vulnerable.txt
+
+  frontend:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: src/frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/frontend/package-lock.json
+      - run: npm ci
+      - name: Generated API types match the published contract
+        run: npm run generate:api && git diff --exit-code -- src/api/
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --audit-level=high --omit=dev
+
+  images:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - name: identity
+            context: .
+            dockerfile: src/services/identity/Dockerfile
+          - name: frontend
+            context: src/frontend
+            dockerfile: src/frontend/Dockerfile
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build -t powerhub/${{ matrix.name }}:${{ github.sha }} -f ${{ matrix.dockerfile }} ${{ matrix.context }}
+      - name: Scan image for Critical and High vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: powerhub/${{ matrix.name }}:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+
+  manifests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - run: |
+          for overlay in staging production; do
+            kubectl kustomize "deploy/kubernetes/overlays/$overlay" > /dev/null
+          done
