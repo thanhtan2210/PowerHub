@@ -50,4 +50,4 @@ There is no broker manifest. Local development uses Mosquitto in Compose; the st
 
 - The ingress controller namespace is labelled `powerhub.io/ingress=true`.
 - A CNI that enforces NetworkPolicy.
-- Managed PostgreSQL with `identity_db`, `device_db`, and a migrator and runtime role for each, created as in [`deploy/compose/postgres/init.sh`](../compose/postgres/init.sh).
+- Managed PostgreSQL with `identity_db`, `device_db`, and a migrator and runtime role for each, created by [`deploy/postgres/bootstrap.sh`](../postgres/bootstrap.sh).
