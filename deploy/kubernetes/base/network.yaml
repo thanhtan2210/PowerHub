@@ -132,6 +132,8 @@ spec:
 ---
 # Identity reaches managed PostgreSQL, SMTP submission, and the OTLP collector. Overlays
 # should narrow the destination to the provider's address range once it is chosen.
+# Port 80 is for certificate revocation lists: the SMTP client refuses a TLS session whose
+# certificate it cannot check for revocation, and those lists are served over plain HTTP.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -148,3 +150,4 @@ spec:
         - { protocol: TCP, port: 5432 }
         - { protocol: TCP, port: 587 }
         - { protocol: TCP, port: 4317 }
+        - { protocol: TCP, port: 80 }
