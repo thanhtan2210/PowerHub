@@ -93,6 +93,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - run: |
-          for overlay in staging production; do
-            kubectl kustomize "deploy/kubernetes/overlays/$overlay" > /dev/null
+          for directory in overlays/staging overlays/production platform/staging; do
+            kubectl kustomize "deploy/kubernetes/$directory" > /dev/null
           done
