@@ -26,6 +26,8 @@ Thumbs.db
 .env.*
 !.env.example
 *.pem
+# Staging credentials live here on the operator's machine; nothing in it is ever committed.
+.secrets/
 *.key
 appsettings.Local.json
 legacy/**/appsettings.Development.json

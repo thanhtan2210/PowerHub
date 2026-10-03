@@ -11,7 +11,7 @@ Staging runs on a single developer workstation: a k3d cluster reached from the I
 | Email | Brevo SMTP |
 | Images | `ghcr.io/thanhtan2210/powerhub-*`, referenced by digest |
 
-Commands are for Git Bash on Windows, run from the repository root. Secrets live in `~/.powerhub-staging/`, outside the repository, and are never pasted into a terminal history, a chat, or a commit.
+Commands are for Git Bash on Windows, run from the repository root. Secrets live in `.secrets/staging/` inside the working copy. The directory is ignored by Git and excluded from Docker build contexts; its contents are never pasted into a terminal history, a chat, or a commit.
 
 ## 1. One-time setup
 
@@ -32,22 +32,35 @@ winget install k3d.k3d Kubernetes.kubectl Tailscale.Tailscale
 
 ### Secret files
 
-Create `~/.powerhub-staging/` with one value per file, no trailing newline needed:
+Copy the templates and fill them in. Lines are `NAME=value` with no quotes and no spaces around `=`.
+
+```sh
+mkdir -p .secrets/staging
+cp -n deploy/kubernetes/platform/staging/secret-templates/*.env .secrets/staging/
+git check-ignore .secrets/staging/secrets.env    # must print the path
+```
 
 | File | Content |
 | --- | --- |
-| `neon-admin.env` | `PGHOST=<direct host>`, `PGUSER=<owner role>`, `PGPASSWORD=<owner password>`, `PGSSLMODE=require`, one per line |
-| `roles.env` | `IDENTITY_MIGRATOR_PASSWORD`, `IDENTITY_SVC_PASSWORD`, `DEVICE_MIGRATOR_PASSWORD`, `DEVICE_SVC_PASSWORD`, each a long random value (`openssl rand -hex 24`) |
-| `grafana.env` | `GRAFANA_CLOUD_OTLP_ENDPOINT`, `GRAFANA_CLOUD_INSTANCE_ID`, `GRAFANA_CLOUD_TOKEN` |
-| `smtp-password` | The Brevo SMTP key |
-| `admin-password` | The first administrator's password |
-| `current.pem` | `openssl ecparam -name prime256v1 -genkey -noout -out ~/.powerhub-staging/current.pem` |
+| `config.env` | Not secret: Funnel host, Neon hosts, SMTP login and sender, administrator email |
+| `neon-admin.env` | The Neon project owner, on the **direct** host |
+| `grafana.env` | OTLP endpoint, instance ID, access token |
+| `secrets.env` | `SMTP_PASSWORD` (the Brevo SMTP key) and `ADMIN_PASSWORD` |
+| `roles.env` | Generated: four database role passwords |
+| `current.pem` | Generated: the token signing key |
+
+```sh
+for name in IDENTITY_MIGRATOR IDENTITY_SVC DEVICE_MIGRATOR DEVICE_SVC; do
+  echo "${name}_PASSWORD=$(openssl rand -hex 24)"
+done > .secrets/staging/roles.env
+openssl ecparam -name prime256v1 -genkey -noout -out .secrets/staging/current.pem
+```
 
 ### Databases
 
 ```sh
 MSYS_NO_PATHCONV=1 docker run --rm \
-  --env-file ~/.powerhub-staging/neon-admin.env --env-file ~/.powerhub-staging/roles.env \
+  --env-file .secrets/staging/neon-admin.env --env-file .secrets/staging/roles.env \
   -v "$(pwd -W)/deploy/postgres/bootstrap.sh:/bootstrap.sh:ro" \
   postgres:17.11-alpine sh /bootstrap.sh
 ```
@@ -67,20 +80,20 @@ kubectl label namespace kube-system powerhub.io/ingress=true
 ### Secrets
 
 ```sh
-. ~/.powerhub-staging/roles.env
-NEON_DIRECT=<direct host>; NEON_POOLED=<pooled host>
+set -a; . .secrets/staging/config.env; . .secrets/staging/roles.env; . .secrets/staging/secrets.env; set +a
+NEON_DIRECT=$NEON_DIRECT_HOST; NEON_POOLED=$NEON_POOLED_HOST
 conn() { echo "Host=$1;Database=$2;Username=$3;Password=$4;SSL Mode=Require"; }
 
 kubectl create namespace powerhub-staging --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n powerhub-staging create secret generic identity-secrets \
   --from-literal=runtime-connection-string="$(conn $NEON_POOLED identity_db identity_svc "$IDENTITY_SVC_PASSWORD")" \
   --from-literal=migrator-connection-string="$(conn $NEON_DIRECT identity_db identity_migrator "$IDENTITY_MIGRATOR_PASSWORD")" \
-  --from-file=smtp-password="$HOME/.powerhub-staging/smtp-password"
+  --from-literal=smtp-password="$SMTP_PASSWORD"
 kubectl -n powerhub-staging create secret generic device-secrets \
   --from-literal=runtime-connection-string="$(conn $NEON_POOLED device_db device_svc "$DEVICE_SVC_PASSWORD")" \
   --from-literal=migrator-connection-string="$(conn $NEON_DIRECT device_db device_migrator "$DEVICE_MIGRATOR_PASSWORD")"
 kubectl -n powerhub-staging create secret generic identity-signing-key \
-  --from-file=current.pem="$HOME/.powerhub-staging/current.pem"
+  --from-file=current.pem=".secrets/staging/current.pem"
 ```
 
 ### Deploy
@@ -92,7 +105,7 @@ kubectl -n powerhub-staging wait --for=condition=complete job/identity-migrate j
 kubectl -n powerhub-staging rollout status deploy/identity deploy/device deploy/frontend --timeout=180s
 
 kubectl apply -k deploy/kubernetes/platform/staging
-kubectl -n observability create secret generic grafana-cloud --from-env-file="$HOME/.powerhub-staging/grafana.env"
+kubectl -n observability create secret generic grafana-cloud --from-env-file=".secrets/staging/grafana.env"
 kubectl -n observability rollout status deploy/alloy --timeout=120s
 ```
 
@@ -102,8 +115,8 @@ Stop if a migration Job fails; do not roll out over a failed migration (INF-MIG-
 
 ```sh
 image=$(kubectl -n powerhub-staging get deploy identity -o jsonpath='{.spec.template.spec.containers[0].image}')
-kubectl -n powerhub-staging create secret generic admin-bootstrap --from-file=password="$HOME/.powerhub-staging/admin-password"
-sed "s|IDENTITY_IMAGE|$image|; s|ADMIN_EMAIL|<email>|" deploy/kubernetes/platform/staging/create-admin.yaml | kubectl apply -f -
+kubectl -n powerhub-staging create secret generic admin-bootstrap --from-literal=password="$ADMIN_PASSWORD"
+sed "s|IDENTITY_IMAGE|$image|; s|ADMIN_EMAIL|$ADMIN_EMAIL|" deploy/kubernetes/platform/staging/create-admin.yaml | kubectl apply -f -
 kubectl -n powerhub-staging wait --for=condition=complete job/create-admin --timeout=120s
 kubectl -n powerhub-staging delete job/create-admin secret/admin-bootstrap
 ```
@@ -158,4 +171,4 @@ Turn Funnel off whenever staging is not being used: it publishes this workstatio
 k3d cluster delete powerhub-staging
 ```
 
-Secrets in the cluster are gone with it. Databases, Grafana data, and the files in `~/.powerhub-staging/` remain.
+Secrets in the cluster are gone with it. Databases, Grafana data, and the files in `.secrets/staging/` remain.
