@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 # Build context: src/frontend.
-FROM node:24.21.0-alpine AS build
+# The build stage runs on the builder's own architecture: the output is static files.
+FROM --platform=$BUILDPLATFORM node:24.21.0-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund

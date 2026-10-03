@@ -5,8 +5,8 @@ import paho.mqtt.client as mqtt
 import requests
 
 # === Thiết lập từ biến môi trường hoặc giá trị mặc định ===
-ADAFRUIT_USERNAME = 'Hellosine'
-ADAFRUIT_IO_KEY   = 'aio_mStR74qgprQUBF5F3UXCTcPdIlay'
+ADAFRUIT_USERNAME = os.environ.get('ADAFRUIT_USERNAME', '')
+ADAFRUIT_IO_KEY   = os.environ.get('ADAFRUIT_IO_KEY', '')
 
 MQTT_BROKER = 'io.adafruit.com'
 MQTT_PORT   = 1883
