@@ -21,6 +21,8 @@ Commands are for Git Bash on Windows, run from the repository root. Secrets live
 winget install k3d.k3d Kubernetes.kubectl Tailscale.Tailscale
 ```
 
+Open a new terminal afterwards so the tools are on `PATH`. Docker Desktop already ships `kubectl`.
+
 ### Accounts
 
 | Service | What to collect |
@@ -75,7 +77,10 @@ Stop the Compose stack first; the workstation does not have memory for both.
 (cd deploy/compose && docker compose stop)
 k3d cluster create powerhub-staging --servers 1 --agents 0 -p "127.0.0.1:8081:80@loadbalancer"
 kubectl label namespace kube-system powerhub.io/ingress=true
+kubectl -n kube-system rollout status deploy/coredns --timeout=600s
 ```
+
+Wait for CoreDNS before deploying: a migration Job started earlier fails its first attempt because it cannot resolve the database host. On a slow connection the first image pulls take several minutes.
 
 ### Secrets
 
@@ -159,7 +164,7 @@ This returns to the previous images only. Migrations are forward-only: a release
 ## 6. Stop and resume
 
 ```sh
-tailscale funnel --bg off 8081 ; k3d cluster stop powerhub-staging     # stop
+tailscale funnel --https=443 off ; k3d cluster stop powerhub-staging   # stop
 k3d cluster start powerhub-staging ; tailscale funnel --bg 8081        # resume
 ```
 
