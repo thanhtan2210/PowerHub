@@ -4,6 +4,7 @@ import { AccountPage } from '../features/account/AccountPage';
 import { useProfile } from '../features/account/useProfile';
 import { ConfirmEmailPage, ForgotPasswordPage, RegisterPage, ResetPasswordPage, SignInPage } from '../features/auth/AuthPages';
 import { RequireAuth, RequirePermission } from '../features/auth/guards';
+import { DevicesPage } from '../features/devices/DevicesPage';
 import { useSessionStatus } from '../features/auth/session';
 
 // Administration is a separate chunk so standard users never download it (FE-PERF-001).
@@ -30,6 +31,7 @@ function Layout() {
           <Link to="/" className="brand">
             PowerHub
           </Link>
+          {status === 'authenticated' && <Link to="/devices">Devices</Link>}
           {status === 'authenticated' && <Link to="/account">Account</Link>}
           {profile.data?.permissions.includes('users.read') && <Link to="/admin/users">Users</Link>}
           {status === 'anonymous' && <Link to="/sign-in">Sign in</Link>}
@@ -53,7 +55,15 @@ export function App() {
         <Route path="/confirm-email" element={<ConfirmEmailPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/" element={<Navigate to="/account" replace />} />
+        <Route path="/" element={<Navigate to="/devices" replace />} />
+        <Route
+          path="/devices"
+          element={
+            <RequireAuth>
+              <DevicesPage />
+            </RequireAuth>
+          }
+        />
         <Route
           path="/account"
           element={

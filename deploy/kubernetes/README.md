@@ -14,7 +14,7 @@ These manifests render and are structurally validated in CI, but **have not been
 | --- | --- |
 | `registry.invalid/...` image names and the `unset` tag | Container registry choice; the pipeline sets digests |
 | `*.powerhub.invalid` hosts, `powerhub-tls`, missing `ingressClassName` | DNS, certificate, and ingress choice |
-| `identity-secrets`, `identity-signing-key` Secrets | Secret manager and workload identity choice |
+| `identity-secrets`, `device-secrets`, `identity-signing-key` Secrets | Secret manager and workload identity choice |
 | Unrestricted destination in `identity-egress` | Managed PostgreSQL and email provider address ranges |
 
 ## Secrets the cluster must provide
@@ -26,6 +26,7 @@ Nothing secret is stored in this repository. The selected secret manager must ma
 | `identity-secrets` | `runtime-connection-string` | Npgsql connection string for the `identity_svc` role (data access only) |
 | `identity-secrets` | `migrator-connection-string` | Connection string for the `identity_migrator` role (schema owner) |
 | `identity-secrets` | `smtp-password` | Optional SMTP credential |
+| `device-secrets` | `runtime-connection-string`, `migrator-connection-string` | Connection strings for `device_svc` and `device_migrator` |
 | `identity-signing-key` | `current.pem` | ECDSA P-256 private key in PEM format |
 
 Generate a signing key with `openssl ecparam -name prime256v1 -genkey -noout -out current.pem`.
@@ -35,7 +36,7 @@ Generate a signing key with `openssl ecparam -name prime256v1 -genkey -noout -ou
 ## Release order
 
 1. Set image digests in the overlay.
-2. `kubectl delete job identity-migrate --ignore-not-found`, apply, and wait for the Job to complete. Stop the release if it fails (INF-MIG-005).
+2. `kubectl delete job identity-migrate device-migrate --ignore-not-found`, apply, and wait for the Jobs to complete. Stop the release if it fails (INF-MIG-005).
 3. Roll out the Deployments and wait for readiness.
 4. Run smoke tests against the public origin.
 
@@ -45,4 +46,4 @@ Create the first administrator with a one-off pod running the service image with
 
 - The ingress controller namespace is labelled `powerhub.io/ingress=true`.
 - A CNI that enforces NetworkPolicy.
-- Managed PostgreSQL with `identity_db` and the two roles created as in [`deploy/compose/postgres/init.sh`](../compose/postgres/init.sh).
+- Managed PostgreSQL with `identity_db`, `device_db`, and a migrator and runtime role for each, created as in [`deploy/compose/postgres/init.sh`](../compose/postgres/init.sh).

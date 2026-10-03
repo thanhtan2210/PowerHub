@@ -2,6 +2,10 @@
   <Folder Name="/building-blocks/">
     <Project Path="src/building-blocks/PowerHub.ServiceDefaults/PowerHub.ServiceDefaults.csproj" />
   </Folder>
+  <Folder Name="/services/device/">
+    <Project Path="src/services/device/PowerHub.Device/PowerHub.Device.csproj" />
+    <Project Path="src/services/device/PowerHub.Device.Tests/PowerHub.Device.Tests.csproj" />
+  </Folder>
   <Folder Name="/services/identity/">
     <Project Path="src/services/identity/PowerHub.Identity/PowerHub.Identity.csproj" />
     <Project Path="src/services/identity/PowerHub.Identity.Tests/PowerHub.Identity.Tests.csproj" />

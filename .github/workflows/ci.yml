@@ -71,6 +71,9 @@ jobs:
           - name: identity
             context: .
             dockerfile: src/services/identity/Dockerfile
+          - name: device
+            context: .
+            dockerfile: src/services/device/Dockerfile
           - name: frontend
             context: src/frontend
             dockerfile: src/frontend/Dockerfile

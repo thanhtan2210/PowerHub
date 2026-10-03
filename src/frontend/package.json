@@ -9,7 +9,7 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run",
-    "generate:api": "openapi-typescript ../../contracts/openapi/identity.json -o src/api/identity.d.ts"
+    "generate:api": "openapi-typescript ../../contracts/openapi/identity.json -o src/api/identity.d.ts && openapi-typescript ../../contracts/openapi/device.json -o src/api/device.d.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "5.104.0",

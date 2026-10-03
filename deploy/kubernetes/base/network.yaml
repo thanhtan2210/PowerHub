@@ -15,6 +15,9 @@ spec:
           - path: /api/v1/users
             pathType: Prefix
             backend: { service: { name: identity, port: { name: http } } }
+          - path: /api/v1/devices
+            pathType: Prefix
+            backend: { service: { name: device, port: { name: http } } }
           - path: /.well-known/jwks.json
             pathType: Exact
             backend: { service: { name: identity, port: { name: http } } }
@@ -57,7 +60,7 @@ spec:
     matchExpressions:
       - key: app.kubernetes.io/name
         operator: In
-        values: [identity, frontend]
+        values: [identity, device, frontend]
   policyTypes: [Ingress]
   ingress:
     - from:
@@ -66,6 +69,46 @@ spec:
               powerhub.io/ingress: "true"
       ports:
         - { protocol: TCP, port: 8080 }
+---
+# Services verify tokens with Identity's public keys, fetched over the cluster network.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: identity-jwks-from-services
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: identity
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: device
+      ports:
+        - { protocol: TCP, port: 8080 }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: device-egress
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values: [device, device-migrate]
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: identity
+      ports:
+        - { protocol: TCP, port: 8080 }
+    - ports:
+        - { protocol: TCP, port: 5432 }
+        - { protocol: TCP, port: 4317 }
 ---
 # Identity reaches managed PostgreSQL, SMTP submission, and the OTLP collector. Overlays
 # should narrow the destination to the provider's address range once it is chosen.

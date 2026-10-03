@@ -1,10 +1,11 @@
 import createClient from 'openapi-fetch';
 import { session } from '../features/auth/session';
 import { baseUrl } from './http';
-import type { paths } from './identity';
+import type { paths as DevicePaths } from './device';
+import type { paths as IdentityPaths } from './identity';
 
 /** The single HTTP client for authenticated API calls (FE-ARC-003). */
-export const api = createClient<paths>({ baseUrl, credentials: 'same-origin' });
+export const api = createClient<IdentityPaths & DevicePaths>({ baseUrl, credentials: 'same-origin' });
 
 // A request body can be read once, so keep a copy to replay after a token refresh.
 const replays = new Map<string, Request>();
