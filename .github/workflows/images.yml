@@ -37,9 +37,12 @@ jobs:
       - name: Resolve image name
         id: image
         run: echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/powerhub-${{ matrix.name }}" >> "$GITHUB_OUTPUT"
+      # Build stages run on the runner's architecture. Emulation is needed only for the
+      # frontend runtime stage, which applies Alpine package updates.
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
       - uses: docker/setup-buildx-action@v3
-      # Build stages run on the runner's architecture and runtime stages only copy files,
-      # so the arm64 image needs no emulation.
       - name: Build for scanning
         uses: docker/build-push-action@v6
         with:
