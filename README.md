@@ -1,272 +1,113 @@
-![image](https://github.com/user-attachments/assets/e3b2c0de-d79c-4d75-9699-8a875c5ebb7e)
+# PowerHub
 
-### SCROLL DOWN FOR MORE IMAGES
-### SCROLL DOWN FOR MORE IMAGES
-### SCROLL DOWN FOR MORE IMAGES
+PowerHub is a web-based IoT device and energy management platform. It brings device inventory, telemetry, remote control, persistent schedules, energy insights, and alerts into one user experience.
 
-# Project Structure
+## Project Status
 
-The project is organized as follows:
+The PowerHub V2 documentation baseline is complete. V2 implementation has not started, and the existing application is a legacy prototype, not a production-ready implementation of the target architecture.
 
-```
-MyIoTPlatformSolution.sln
-/src
-|
-|--- MyIoTPlatform.Domain/                      # Core layer, does not depend on other layers
-|   |--- Entities/                              # Main business objects
-|   |   |--- Device.cs
-|   |   |--- TelemetryData.cs
-|   |   |--- DeviceType.cs
-|   |   |--- User.cs
-|   |   |--- Alarm.cs
-|   |--- Enums/                                 # Common enum types
-|   |   |--- DeviceStatus.cs
-|   |   |--- AlarmSeverity.cs
-|   |--- Interfaces/                            # Interfaces for Repositories or Domain Services
-|   |   |--- Repositories/
-|   |   |   |--- IDeviceRepository.cs
-|   |   |   |--- ITelemetryRepository.cs
-|   |   |--- Services/
-|   |--- Common/                                # Common base classes or structures within the Domain
-|   |--- Exceptions/                            # Custom business exceptions
-|   |--- MyIoTPlatform.Domain.csproj
-|
-|--- MyIoTPlatform.Application/                 # Business Logic Layer, Use Cases
-|   |--- Features/                              # Organized by business feature (Vertical Slices)
-|   |   |--- Devices/
-|   |   |   |--- Commands/                      # Commands (Create, Update, Delete)
-|   |   |   |   |--- RegisterDeviceCommand.cs
-|   |   |   |   |--- RegisterDeviceCommandHandler.cs
-|   |   |   |--- Queries/                       # Queries (Get)
-|   |   |   |   |--- GetDeviceByIdQuery.cs
-|   |   |   |   |--- GetDeviceByIdQueryHandler.cs
-|   |   |   |--- DTOs/                          # Data Transfer Objects for Device business
-|   |   |   |   |--- DeviceDto.cs
-|   |   |--- Telemetry/
-|   |   |   |--- Commands/
-|   |   |   |   |--- IngestTelemetryCommand.cs
-|   |   |   |   |--- IngestTelemetryCommandHandler.cs
-|   |   |   |--- Queries/
-|   |   |   |   |--- GetLatestTelemetryQuery.cs
-|   |   |   |   |--- GetLatestTelemetryQueryHandler.cs
-|   |   |   |--- DTOs/
-|   |   |   |   |--- TelemetryDto.cs
-|   |   |--- MachineLearning/                   # ML related logic
-|   |   |   |--- Commands/
-|   |   |   |   |--- TriggerPredictionCommand.cs
-|   |   |   |--- Queries/
-|   |   |   |--- Services/                      # Interface to call Azure ML
-|   |   |   |   |--- IAzureMlService.cs
-|   |--- Interfaces/                            # Interfaces for Infrastructure (DB, MQTT, Email,...)
-|   |   |--- Persistence/
-|   |   |   |--- IApplicationDbContext.cs       # Interface for DbContext
-|   |   |--- Communication/
-|   |   |   |--- IMqttClientService.cs          # Interface for MQTT client
-|   |   |   |--- IRealtimeNotifier.cs           # Interface for SignalR/realtime
-|   |--- Common/                                # Mapping (AutoMapper), Validation (FluentValidation)
-|   |   |--- Mappings/
-|   |   |--- Behaviors/                         # (For MediatR pipeline)
-|   |--- MyIoTPlatform.Application.csproj
-|
-|--- MyIoTPlatform.Infrastructure/              # Layer for specific technical implementations
-|   |--- Persistence/                            # Data access implementation (EF Core)
-|   |   |--- DbContexts/
-|   |   |   |--- ApplicationDbContext.cs        # DbContext implementation with Azure SQL
-|   |   |--- Repositories/                        # Implementation of Repository Interfaces
-|   |   |   |--- DeviceRepository.cs
-|   |   |   |--- TelemetryRepository.cs
-|   |   |--- Migrations/                          # EF Core Migrations
-|   |   |--- Configuration/                       # Entity Type Configuration (Fluent API)
-|   |--- Communication/
-|   |   |--- Mqtt/                                # MQTT Client implementation (e.g., using MQTTnet)
-|   |   |   |--- MqttClientService.cs           # Listen/Send MQTT messages
-|   |   |--- Realtime/                            # SignalR Hub implementation
-|   |   |   |--- DashboardHub.cs
-|   |   |   |--- RealtimeNotifier.cs
-|   |--- MachineLearning/                        # Implementation for calling Azure ML Service
-|   |   |--- AzureMlService.cs
-|   |--- Services/                              # Other services (Email, File Storage,...)
-|   |--- DependencyInjection.cs                 # Register Infrastructure services
-|   |--- MyIoTPlatform.Infrastructure.csproj
-|
-|--- MyIoTPlatform.API/ (or WebAPI)             # API Layer (ASP.NET Core)
-|   |--- Controllers/                            # API Endpoints
-|   |   |--- AuthController.cs
-|   |   |--- DashboardController.cs
-|   |   |--- EnergyController.cs
-|   |   |--- DevicesController.cs
-|   |   |--- AnalyticsController.cs
-|   |   |--- UsersController.cs
-|   |   |--- SubscriptionController.cs
-|   |   |--- SecurityController.cs
-|   |   |--- NotificationsController.cs
-|   |--- Hubs/                                  # SignalR Hub declarations (if not in Infrastructure)
-|   |--- Middleware/                            # Custom Middleware (Error Handling, Logging)
-|   |--- Program.cs                             # Application startup, configure services, pipeline
-|   |--- appsettings.json
-|   |--- appsettings.Development.json
-|   |--- MyIoTPlatform.API.csproj
-|
-/tests
-|--- MyIoTPlatform.Domain.Tests/
-|   |--- DeviceTests.cs
-|   |--- MyIoTPlatform.Domain.Tests.csproj
-|--- MyIoTPlatform.Application.Tests/
-|   |--- RegisterDeviceCommandHandlerTests.cs
-|   |--- MyIoTPlatform.Application.Tests.csproj
-|--- MyIoTPlatform.Infrastructure.Tests/
-|   |--- MqttClientServiceTests.cs
-|   |--- MyIoTPlatform.Infrastructure.Tests.csproj
-|--- MyIoTPlatform.API.Tests/
-|   |--- DevicesControllerTests.cs
-|   |--- MyIoTPlatform.API.Tests.csproj
-```
+Start with the [documentation portal](docs/README.md) for the product purpose, requirements, architecture, and delivery plan. Review the remaining decisions before starting the next implementation phase.
 
-# Usage Instructions
+## What PowerHub Is For
 
-1. **Setup**:
-   - Clone the repository.
-   - Navigate to the project directory.
-   - Install necessary dependencies for both backend and frontend.
+PowerHub is intended for households and small sites that need to:
 
-2. **Backend**:
-   - Open the solution file `MyIoTPlatformSolution.sln` in Visual Studio.
-   - Build the solution to restore NuGet packages.
-   - Run the project to start the backend server.
+- Register, organize, and share access to connected devices.
+- Monitor device measurements and energy consumption.
+- Request device actions and distinguish desired state from reported state.
+- Run schedules that survive service restarts.
+- Define telemetry thresholds and receive authorized alerts.
+- Investigate device behavior through historical readings and notifications.
 
-3. **Frontend**:
-   - Navigate to the `frontend` directory.
-   - Run `npm install` to install dependencies.
-   - Use `npm run dev` to start the development server.
+See the [project overview](docs/product/project-overview.md), [use cases](docs/product/use-cases.md), and [user journeys](docs/product/user-journeys.md) for practical applications and scope.
 
-4. **Testing**:
-   - Backend tests are located in the `*.Tests` projects under the `backend` directory.
-   - Frontend tests can be run using `npm test` in the `frontend` directory.
+## Target Architecture
 
-5. **Deployment**:
-   - Follow the deployment instructions specific to your hosting environment.
+The following technologies describe the V2 target, not the current prototype.
 
+| Concern | V2 baseline |
+| --- | --- |
+| Frontend | React and TypeScript |
+| Backend | ASP.NET Core microservices |
+| Initial services | Identity, Device, Telemetry, Notification |
+| Identity | ASP.NET Core Identity and asymmetrically signed JWTs |
+| Persistence | PostgreSQL only, with a separate database and role per service |
+| Device communication | MQTT |
+| Internal integration | HTTP APIs and PostgreSQL-backed Outbox/Inbox delivery |
+| Browser real time | SignalR |
+| Local environment | Docker Compose |
+| Staging and production | Kubernetes with Kustomize and managed PostgreSQL |
+| Observability | OpenTelemetry with structured logs, metrics, and traces |
 
-# Task must do
-To implement the requested features, we need to break them down into smaller tasks and identify the files or components that need to be updated. Here's a high-level plan:
+Services do not access another service's database. Delivery is at least once, so commands and event consumers must handle retries idempotently.
 
-### 1. **Real-time Notifications**
-   - Use SignalR (already present in the backend under `Hubs/`) to send notifications to users when specific events occur.
-   - Update the backend to trigger notifications for relevant events.
-   - Update the frontend to listen for and display notifications.
+RabbitMQ, Kafka, Redis, a service mesh, and a general workflow engine are not initial dependencies. They require a demonstrated need and a new architecture decision.
 
-### 2. **Live Chat**
-   - Implement a SignalR hub for chat functionality in the backend.
-   - Create frontend components for the chat interface.
-   - Establish real-time communication between users via SignalR.
+See the [technology baseline](docs/architecture/technology-baseline.md), [service boundaries](docs/architecture/service-boundaries.md), and [architecture decisions](docs/adr/README.md).
 
-### 3. **Data Streaming**
-   - Use SignalR to stream IoT data updates from the backend to the frontend.
-   - Update the backend to push IoT data changes to connected clients.
-   - Update the frontend to display real-time IoT data updates.
+## Validation Without Hardware
 
-### 4. **Collaboration Tools**
-   - Implement collaborative editing or shared dashboards using SignalR.
-   - Update the backend to manage shared state and broadcast updates.
-   - Update the frontend to reflect real-time changes in shared dashboards or documents.
+No physical test hardware or owned telemetry is currently available. The initial validation strategy uses a Virtual Device Simulator to replay measured public datasets through the same MQTT contract intended for physical devices.
 
-To implement the requested features, we can break them down into smaller tasks and identify the files or areas in the workspace that need to be modified:
+- REFIT is the primary household and appliance replay source.
+- UCI datasets provide smaller developer fixtures and resilience scenarios.
+- Synthetic messages cover deterministic faults and edge conditions.
+- Dataset admission requires license, attribution, checksum, provenance, and transformation records.
 
-### 1. **Real-time Notifications**
-   - Use SignalR (already present in the `Hubs/` folder) for real-time communication.
-   - Add a notification hub to handle sending notifications to users.
-   - Update the frontend to listen for notifications and display them.
+Replay validates software workflows, ingestion, data handling, and failure recovery. It does not validate sensors, firmware, radio behavior, electrical safety, or physical device compatibility.
 
-### 2. **Live Chat**
-   - Create a SignalR hub for chat functionality.
-   - Add a chat interface in the frontend under `components/` or `pages/`.
-   - Implement backend logic to handle chat messages.
+See the [source dataset strategy](docs/data/source-datasets.md), [simulator design](docs/testing/device-simulator.md), and [simulation requirements](docs/requirements/powerhub-v2/11-test-data-simulation-requirements.md).
 
-### 3. **Data Streaming**
-   - Use SignalR to stream IoT data updates to the frontend.
-   - Update the backend to push IoT data to connected clients.
-   - Modify the frontend to display real-time IoT data updates.
+## Documentation Map
 
-### 4. **Collaboration Tools**
-   - Implement collaborative editing or shared dashboards using SignalR.
-   - Add backend logic to synchronize data between users.
-   - Update the frontend to support collaborative features.
+All V2 documentation is written in English.
 
-start by implementing the **Real-time Notifications** feature.To implement the requested features, we can break them down into smaller tasks and identify the files or areas in the workspace that need to be modified:
+| Area | Starting point |
+| --- | --- |
+| Product | [Project overview](docs/product/project-overview.md) |
+| Requirements | [Requirements index](docs/requirements/powerhub-v2-requirements.md) |
+| Traceability | [Requirement-to-evidence model](docs/requirements/traceability.md) |
+| Architecture | [Architecture overview](docs/architecture/README.md) |
+| Decisions | [ADR index](docs/adr/README.md) |
+| API and messaging | [Contract documentation](docs/api/README.md) |
+| Data and migration | [Data documentation](docs/data/README.md) |
+| Testing | [Test strategy](docs/testing/test-strategy.md) |
+| Security | [Threat model](docs/security/threat-model.md) and [security baseline](docs/security/security-baseline.md) |
+| Operations | [Operational runbooks](docs/runbooks/README.md) |
+| Delivery | [Implementation plan](docs/roadmap/implementation-plan.md) |
+| Acceptance | [Definition of Done](docs/roadmap/definition-of-done.md) and [production readiness checklist](docs/roadmap/production-readiness-checklist.md) |
+| Terminology and governance | [Glossary](docs/glossary.md) and [documentation governance](docs/documentation-governance.md) |
 
-### 1. **Real-time Notifications**
-   - Use SignalR (already present in the `Hubs/` folder) to send notifications to users when specific events occur.
-   - Backend: Update or create a SignalR hub in `MyIoTPlatform.API/Hubs/`.
-   - Frontend: Add a notification system in components.
+## Repository State
 
-### 2. **Live Chat**
-   - Backend: Create a SignalR hub for chat functionality in `MyIoTPlatform.API/Hubs/`.
-   - Frontend: Add a chat UI in components.
+The current repository contains the legacy application:
 
-### 3. **Data Streaming**
-   - Backend: Use SignalR to stream IoT data updates to the frontend in real-time.
-   - Frontend: Update the `DashboardIOT/` component in components to display real-time data.
+- `backend/`: the existing .NET solution.
+- `frontend/`: the existing web application.
+- `AI_services/`: legacy Python service dependencies.
+- `docs/`: the V2 design and requirement baseline.
 
-### 4. **Collaboration Tools**
-   - Backend: Implement APIs or SignalR hubs for collaborative editing or shared dashboards.
-   - Frontend: Add collaboration features in components.
+This is not the proposed V2 service layout. See the [target repository structure](docs/architecture/repository-structure.md) before creating new implementation projects.
 
+Historical screenshots are preserved in the [legacy prototype gallery](docs/product/legacy-prototype-gallery.md). Older README content remains available in Git history.
 
-### TRANG CHỦ
-![image](https://github.com/user-attachments/assets/c233f3f9-a899-49b7-a69c-71d9bd1f0b37)
-![image](https://github.com/user-attachments/assets/0e40e6c3-a553-42bd-874c-127227d774a8)
-![image](https://github.com/user-attachments/assets/7106bae9-ad4e-4ad6-8f83-8a5fa6a38e2a)
-![image](https://github.com/user-attachments/assets/d57d46c2-31b1-4950-ba3c-a5447e5128ca)
+## Next Phase
 
-### TRANG BLOGS
-![image](https://github.com/user-attachments/assets/61c7d39d-99f9-4891-94dc-dff8abca55da)
-![image](https://github.com/user-attachments/assets/7436cb7e-d644-4c9d-acad-6f4d1e2e24e4)
-![image](https://github.com/user-attachments/assets/b6079ae3-f659-4f31-8457-8e20bf11fbf1)
+Follow the [implementation plan](docs/roadmap/implementation-plan.md):
 
-### TRANG FAQs
-![image](https://github.com/user-attachments/assets/f0cd3991-9424-466c-84fe-8014d0765602)
-![image](https://github.com/user-attachments/assets/d1c18c31-3167-483c-96eb-55305eeaeab3)
+1. Review the documentation baseline and assign delivery and operational owners.
+2. Resolve the cloud, managed PostgreSQL, MQTT broker, ingress, secret manager, registry, and observability choices.
+3. Approve workload assumptions, capacity objectives, retention, and recovery objectives.
+4. Create a requirement-linked backlog and select the first vertical slice.
+5. Build the engineering and platform foundation, then deliver Identity and subsequent end-to-end slices.
 
-### TRANG SIGNIN/SIGNUP
-![image](https://github.com/user-attachments/assets/73fdf28c-b042-473b-8fb3-89f3757f5d18)
-![image](https://github.com/user-attachments/assets/293d6a97-9a7f-4c1b-a305-050b4110d2f8)
-![image](https://github.com/user-attachments/assets/43f83f2f-fba2-4781-8ce0-612f6f00d928)
-![image](https://github.com/user-attachments/assets/f24191a0-063c-4068-a227-4e00957007c8)
-![image](https://github.com/user-attachments/assets/cea4e697-0821-4018-b2f9-ec594b17a31d)
+Generated OpenAPI and message schemas, executable deployment commands, and production verification evidence will be added with the corresponding implementation. There is no V2 quick-start or automated test suite yet.
 
-### TRANG DASHBOARD USER
-![image](https://github.com/user-attachments/assets/7de88daa-e57e-4dcf-883b-d7dee09e6644)
-![image](https://github.com/user-attachments/assets/5b184760-a09f-42d5-bc26-aedf184c6d34)
-![image](https://github.com/user-attachments/assets/db636c8c-fb0c-4e90-a4ae-8aa84b8a4e0b)
-![image](https://github.com/user-attachments/assets/1e8a70fc-e712-446f-99f8-3c4447229338)
-![image](https://github.com/user-attachments/assets/cd028503-b85c-48c7-b89b-4b0f774a1f60)
-![image](https://github.com/user-attachments/assets/df2b1a95-ddae-4a30-8174-2f26b3628342)
-![image](https://github.com/user-attachments/assets/040ea2a2-b05e-483f-ad0d-5aa22134fbce)
-![image](https://github.com/user-attachments/assets/7fe0badf-fd85-4cac-936e-fb8a1deefb51)
-![image](https://github.com/user-attachments/assets/f478583e-c973-452d-b078-112131a3546a)
+## Contributing
 
-### TRANG DỮ LIỆU TỪ RSTUDIO 
-![image](https://github.com/user-attachments/assets/82e4f12a-2562-4e56-9a43-9c78dfed8a72)
-
-Updating Admin dashborad ........
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- Link each implementation task and change to requirement IDs.
+- Record changes to accepted architecture decisions in an ADR.
+- Update affected contracts, tests, documentation, and runbooks in the same change.
+- Keep commits focused on one concern so changes can be reviewed and reverted independently.
+- Never commit secrets, production personal data, or large raw dataset artifacts.
+- Do not treat legacy code, screenshots, or comments as the authoritative V2 specification.
