@@ -25,6 +25,7 @@ Architecture Decision Records (ADRs) explain why PowerHub uses its major technic
 | [0010](0010-kubernetes-platform.md) | Use Kubernetes for staging and production | Accepted |
 | [0011](0011-browser-session-transport.md) | Hold the refresh token in an HttpOnly cookie and the access token in memory | Proposed |
 | [0012](0012-service-token-verification.md) | Verify tokens from cluster-internal JWKS and answer 404 for inaccessible resources | Proposed |
+| [0013](0013-mqtt-broker-delegated-auth.md) | Use Mosquitto locally with authentication delegated to Device Service | Proposed |
 
 ## ADR workflow
 

@@ -6,10 +6,11 @@ Owns the device inventory and decides what a user may do with each device. Ident
 
 | Implemented | Planned in later slices |
 | --- | --- |
-| Register, list, read, rename, remove devices | MQTT credential provisioning at the broker (3b) |
+| Register, list, read, rename, remove devices | Service identities at the broker (3d) |
 | Ownership and the `view` / `control` / `manage` permission model | Sharing a device with another user |
 | One-time device credentials with rotation | Locations, desired state, commands, schedules (Phase 4) |
 | Audit trail and Outbox records for every change | Outbox dispatcher (3d) |
+| MQTT connection and topic authorization for the broker | |
 
 ## API
 
@@ -25,6 +26,18 @@ The generated contract is [`contracts/openapi/device.json`](../../../contracts/o
 | `POST` | `/api/v1/devices/{deviceId}/credentials` | Needs `manage`. Revokes the old credential, returns the new one once |
 
 **Access rule:** a caller with no membership receives `404`, identical to an unknown id, so the API never confirms that another user's device exists. A member whose permission is too low receives `403`.
+
+## MQTT authorization
+
+The broker stores no credentials. It calls these endpoints for every connection and topic decision ([ADR 0013](../../../docs/adr/0013-mqtt-broker-delegated-auth.md)):
+
+| Method | Path | Answer |
+| --- | --- | --- |
+| `POST` | `/internal/v1/mqtt/auth` | `200` when the username is a device id and the password matches an active credential, else `401` |
+| `POST` | `/internal/v1/mqtt/acl` | `200` when `MqttTopicPolicy` allows the topic for that device and the device still exists, else `403` |
+| `POST` | `/internal/v1/mqtt/superuser` | Always `403` |
+
+They take no user token and **must not be reachable from outside**: the gateway and ingress do not route `/internal`, and network policy admits only the broker. Rejections are counted in the `powerhub.mqtt.auth.rejected` metric by reason.
 
 ## Database
 
@@ -61,4 +74,6 @@ cd deploy/compose && docker compose up --build      # whole stack
 dotnet PowerHub.Device.dll migrate                   # apply migrations (release step)
 ```
 
-Tests start the real service against a throwaway PostgreSQL database and sign their own tokens, standing in for Identity. They cover cross-user isolation, rejected tokens (wrong key, issuer, audience, expired, unsigned), ETag handling including concurrent writers, credential storage and rotation, and that each change writes exactly one audit and one Outbox record.
+Tests start the real service against a throwaway PostgreSQL database and sign their own tokens, standing in for Identity. They cover cross-user isolation, rejected tokens (wrong key, issuer, audience, expired, unsigned), ETag handling including concurrent writers, credential storage and rotation, the MQTT topic allow-list, and that each change writes exactly one audit and one Outbox record.
+
+`tests/integration/mqtt-acl.sh` checks the same rules against the real broker in the Compose stack.

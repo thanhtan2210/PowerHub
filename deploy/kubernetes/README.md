@@ -42,6 +42,10 @@ Generate a signing key with `openssl ecparam -name prime256v1 -genkey -noout -ou
 
 Create the first administrator with a one-off pod running the service image with arguments `create-admin <email>` and `POWERHUB_ADMIN_PASSWORD` supplied from the secret manager. There is no public path to that role.
 
+## MQTT broker
+
+There is no broker manifest. Local development uses Mosquitto in Compose; the staging and production broker (self-hosted or managed), its TLS endpoint, and its exposure are open decisions. A broker running in the cluster must be labelled `app.kubernetes.io/name: mqtt-broker` to reach Device Service's `/internal/v1/mqtt` endpoints. A broker outside the cluster needs a separately authenticated private path to them; do not add `/internal` to the Ingress.
+
 ## Prerequisites the overlays assume
 
 - The ingress controller namespace is labelled `powerhub.io/ingress=true`.

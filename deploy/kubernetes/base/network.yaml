@@ -110,6 +110,26 @@ spec:
         - { protocol: TCP, port: 5432 }
         - { protocol: TCP, port: 4317 }
 ---
+# The MQTT broker asks Device Service to authenticate devices and authorise topics
+# (ADR 0013). No broker manifest exists yet: where it runs in staging and production is an
+# open decision. Whatever runs it must carry this label, in this namespace.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: device-from-mqtt-broker
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: device
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: mqtt-broker
+      ports:
+        - { protocol: TCP, port: 8080 }
+---
 # Identity reaches managed PostgreSQL, SMTP submission, and the OTLP collector. Overlays
 # should narrow the destination to the provider's address range once it is chosen.
 apiVersion: networking.k8s.io/v1

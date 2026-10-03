@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "messageId": "01991c3e-9a1b-7000-8000-000000000003",
+  "deviceId": "0199aaaa-0000-7000-8000-000000000001",
+  "observedAt": "2026-09-12T08:30:00Z",
+  "sequence": 481,
+  "data": {
+    "powerW": 742.5,
+    "energyWh": 12345.6,
+    "voltageV": 230.1
+  },
+  "provenance": {
+    "origin": "made_up"
+  }
+}

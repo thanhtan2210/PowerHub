@@ -1,8 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PowerHub.Device.Data;
@@ -250,13 +248,12 @@ public static class DeviceEndpoints
 
     private static string AddCredential(DeviceDb db, Guid deviceId, DateTimeOffset now)
     {
-        // 256 random bits; only the digest is stored, so a database leak yields no usable credential.
-        var secret = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+        var secret = DeviceSecrets.Create();
         db.Credentials.Add(new DeviceCredential
         {
             Id = Guid.CreateVersion7(),
             DeviceId = deviceId,
-            SecretHash = SHA256.HashData(Encoding.UTF8.GetBytes(secret)),
+            SecretHash = DeviceSecrets.Hash(secret),
             CreatedAt = now,
         });
         return secret;

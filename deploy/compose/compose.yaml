@@ -4,6 +4,7 @@
 # The database init script runs only on a new volume. After pulling a change that adds a
 # service database, recreate it once with: docker compose down -v
 # Web application: http://localhost:8080   Captured email: http://localhost:8025
+# MQTT broker:     localhost:1883 (username = device id, password = device credential)
 name: powerhub
 
 services:
@@ -94,6 +95,18 @@ services:
       device-migrate:
         condition: service_completed_successfully
       identity:
+        condition: service_started
+
+  # MQTT is the device-facing protocol only. The broker holds no credentials: it asks
+  # Device Service to authenticate each connection and authorise each topic (ADR 0013).
+  mqtt:
+    image: iegomez/mosquitto-go-auth:3.0.0-mosquitto_2.0.18
+    volumes:
+      - ./mosquitto/mosquitto.conf:/etc/mosquitto/mosquitto.conf:ro
+    ports:
+      - "127.0.0.1:1883:1883"
+    depends_on:
+      device:
         condition: service_started
 
   frontend:
