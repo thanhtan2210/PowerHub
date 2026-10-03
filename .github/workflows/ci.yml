@@ -78,7 +78,7 @@ jobs:
       - uses: actions/checkout@v5
       - run: docker build -t powerhub/${{ matrix.name }}:${{ github.sha }} -f ${{ matrix.dockerfile }} ${{ matrix.context }}
       - name: Scan image for Critical and High vulnerabilities
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: powerhub/${{ matrix.name }}:${{ github.sha }}
           severity: CRITICAL,HIGH
