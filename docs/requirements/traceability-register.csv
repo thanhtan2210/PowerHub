@@ -185,7 +185,7 @@ NFR-DATA-012,MUST,1.2,@thanhtan2210,,,,,Pending,,,
 NFR-DATA-013,MUST,1.2,@thanhtan2210,,,,,Pending,,,
 NFR-DATA-014,MUST,1.2,@thanhtan2210,,,,,Pending,,,
 DATA-CON-001,MUST,1.2,@thanhtan2210,PR 3,,device:DeviceTests.Update_requires_the_current_etag; device:DeviceTests.Concurrent_updates_with_the_same_etag_apply_exactly_once; web:DevicesPage.test.tsx#explains a conflicting change instead of overwriting it,CI,Passed,,2026-10-19 8a299be,
-DATA-CON-002,MUST,1.2,@thanhtan2210,,,,,Pending,,,
+DATA-CON-002,MUST,1.2,@thanhtan2210,PR 9,ADR 0017,device:OutboxRelayTests.Concurrent_relays_deliver_each_event_once; device:OutboxRelayTests.A_held_delivery_is_left_alone_until_its_lease_expires,CI,Pending,,2026-10-19 83a6ca1,Outbox claiming passes; schedule claiming does not exist yet.
 DATA-CON-003,MUST,1.2,@thanhtan2210,,,,,Pending,,,
 DATA-CON-004,MUST,1.2,@thanhtan2210,,,,,Pending,,,
 DATA-CON-005,MUST,1.2,@thanhtan2210,PR 3,ADR 0003,device:DeviceTests.Each_change_records_one_audit_entry_and_one_outbox_event; device:DeviceTests.A_rejected_request_leaves_no_audit_or_outbox_record,CI,Passed,,2026-10-19 8a299be,
@@ -196,13 +196,13 @@ DATA-OPS-004,MUST,1.2,@thanhtan2210,,,,,Pending,,,
 DATA-OPS-005,MUST,1.2,@thanhtan2210,,,,,Pending,,,
 DATA-OPS-006,MUST,1.2,@thanhtan2210,,,,,Pending,,,
 INT-001,MUST,1.2,@thanhtan2210,PR 3,ADR 0003,device:DeviceTests.Each_change_records_one_audit_entry_and_one_outbox_event; device:DeviceTests.A_rejected_request_leaves_no_audit_or_outbox_record,CI,Passed,,2026-10-19 8a299be,
-INT-002,MUST,1.2,@thanhtan2210,,,,,Pending,,,
+INT-002,MUST,1.2,@thanhtan2210,PR 9,ADR 0003; ADR 0017,device:OutboxRelayTests.Each_event_reaches_every_subscribed_destination_once; device:OutboxRelayTests.A_held_delivery_is_left_alone_until_its_lease_expires,CI,Pending,,2026-10-19 83a6ca1,Publisher side passes; consumers with an Inbox do not exist yet.
 INT-003,MUST,1.2,@thanhtan2210,,,,,Pending,,,
-INT-004,MUST,1.2,@thanhtan2210,,,,,Pending,,,
-INT-005,MUST,1.2,@thanhtan2210,,,,,Pending,,,
-INT-006,MUST,1.2,@thanhtan2210,,,,,Pending,,,
+INT-004,MUST,1.2,@thanhtan2210,PR 9,ADR 0017,device:OutboxRelayTests.A_failed_delivery_is_retried_after_a_backoff; device:OutboxRelayTests.Backoff_grows_exponentially_up_to_ten_minutes_with_jitter,CI,Passed,,2026-10-19 83a6ca1,
+INT-005,MUST,1.2,@thanhtan2210,PR 9,ADR 0017,device:OutboxRelayTests.A_rejected_event_is_dead_lettered_at_once; device:OutboxRelayTests.Retrying_stops_at_the_attempt_limit,CI,Pending,,2026-10-19 83a6ca1,Dead-letter state and metric exist; no alert is defined yet.
+INT-006,MUST,1.2,@thanhtan2210,PR 9,ADR 0017,file:src/services/device/PowerHub.Device/Features/OutboxRelay.cs,inspection,Pending,,2026-10-19 83a6ca1,Metrics are exported; not yet observed in a telemetry backend.
 INT-007,MUST,1.2,@thanhtan2210,,,,,Pending,,,
-INT-008,MUST,1.2,@thanhtan2210,,,,,Pending,,,
+INT-008,MUST,1.2,@thanhtan2210,PR 9,ADR 0015,device:OutboxRelayTests.A_refused_token_is_replaced_before_the_retry; identity:ServiceTokenTests.Registered_client_receives_a_short_lived_token_for_its_audience,CI,Pending,,2026-10-19 83a6ca1,The publisher authenticates with a service token and a timeout; no receiver verifies it yet.
 INT-009,MUST,1.2,@thanhtan2210,,,,,Pending,,,
 INT-010,MUST,1.2,@thanhtan2210,,,,,Pending,,,
 INT-011,MUST,1.2,@thanhtan2210,,,,,Pending,,,
@@ -256,7 +256,7 @@ NFR-SEC-013,MUST,1.2,@thanhtan2210,PR 2,ADR 0006,identity:AuthenticationTests.Pu
 NFR-SEC-014,MUST,1.2,@thanhtan2210,,,,,Pending,,,
 NFR-SEC-015,MUST,1.2,@thanhtan2210,PR 2,,identity:AdministrationTests.Disabling_an_account_ends_access_and_reactivation_restores_it,CI,Passed,,2026-10-19 8a299be,
 NFR-SEC-016,MUST,1.2,@thanhtan2210,PR 6,ADR 0014,smoke:origin is HTTPS; smoke:plain HTTP is not served as-is,staging,Pending,,2026-10-19 8a299be,HTTPS verified on staging; device MQTT connections do not use TLS yet.
-NFR-SEC-017,MUST,1.2,@thanhtan2210,,,,,Pending,,,
+NFR-SEC-017,MUST,1.2,@thanhtan2210,PR 9,ADR 0015,identity:ServiceTokenTests.Registered_client_receives_a_short_lived_token_for_its_audience; identity:ServiceTokenTests.A_service_token_is_refused_by_public_endpoints; identity:ServiceTokenTests.Wrong_secret_and_unknown_client_are_refused_alike; identity:ServiceTokenTests.An_audience_the_client_is_not_allowed_is_refused,CI,Pending,,2026-10-19 83a6ca1,Tokens are issued; the first internal endpoint that verifies them arrives with Telemetry.
 NFR-SEC-018,MUST,1.2,@thanhtan2210,,,,,Pending,,,
 NFR-SEC-019,MUST,1.2,@thanhtan2210,PR 4; PR 6,ADR 0013,smoke:does not reach a backend; device:MqttAuthTests.Broker_endpoints_are_not_part_of_the_public_contract,staging,Passed,,2026-10-19 8a299be,
 NFR-SEC-020,MUST,1.2,@thanhtan2210,PR 6,ADR 0002,file:deploy/postgres/bootstrap.sh,inspection,Passed,,2026-10-19 8a299be,One migrator and one runtime role per service and environment.
