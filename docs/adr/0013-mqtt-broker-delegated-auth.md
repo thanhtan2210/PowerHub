@@ -1,6 +1,7 @@
 # ADR 0013: Mosquitto with Authentication Delegated to Device Service
 
-- Status: Proposed
+- Status: Accepted
+- Accepted: 2026-10-19 by @thanhtan2210
 - Date: 2026-10-02
 
 ## Context

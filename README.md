@@ -4,9 +4,9 @@ PowerHub is a web-based IoT device and energy management platform. It brings dev
 
 ## Project Status
 
-The V2 documentation baseline is complete and implementation has started. The engineering foundation (Phase 1, local and CI parts), the Identity vertical slice (Phase 2), and the device inventory and MQTT boundary parts of Phase 3 exist in `src/`. A device can connect and publish, but nothing consumes its messages yet: Telemetry and Notification are not built, and nothing has been deployed to a cluster. The original application is preserved under `legacy/` as a prototype reference only.
+The V2 documentation baseline is complete and implementation has started. The engineering foundation (Phase 1), the Identity vertical slice (Phase 2), and the device inventory and MQTT boundary parts of Phase 3 exist in `src/`, and are deployed to an interim staging environment on a workstation ([ADR 0014](docs/adr/0014-workstation-staging.md)). Phases 1 and 2 still lack some staging evidence: see [staging evidence](docs/operations/staging-evidence.md). A device can connect and publish, but nothing consumes its messages yet: Telemetry and Notification are not built. The original application is preserved under `legacy/` as a prototype reference only.
 
-Start with the [documentation portal](docs/README.md) for the product purpose, requirements, architecture, and delivery plan. Review the remaining decisions before starting the next implementation phase.
+Start with the [documentation portal](docs/README.md) for the product purpose, requirements, architecture, and delivery plan. The [backlog](docs/roadmap/backlog.md) orders the remaining work, and the [traceability register](docs/requirements/traceability-register.csv) records which requirements have evidence.
 
 ## What PowerHub Is For
 
@@ -66,15 +66,15 @@ All V2 documentation is written in English.
 | --- | --- |
 | Product | [Project overview](docs/product/project-overview.md) |
 | Requirements | [Requirements index](docs/requirements/powerhub-v2-requirements.md) |
-| Traceability | [Requirement-to-evidence model](docs/requirements/traceability.md) |
+| Traceability | [Requirement-to-evidence model](docs/requirements/traceability.md) and [register](docs/requirements/traceability-register.csv) |
 | Architecture | [Architecture overview](docs/architecture/README.md) |
 | Decisions | [ADR index](docs/adr/README.md) |
 | API and messaging | [Contract documentation](docs/api/README.md) |
 | Data and migration | [Data documentation](docs/data/README.md) |
 | Testing | [Test strategy](docs/testing/test-strategy.md) |
 | Security | [Threat model](docs/security/threat-model.md) and [security baseline](docs/security/security-baseline.md) |
-| Operations | [Operational runbooks](docs/runbooks/README.md) |
-| Delivery | [Implementation plan](docs/roadmap/implementation-plan.md) |
+| Operations | [Operational runbooks](docs/runbooks/README.md), [staging runbook](docs/operations/staging-runbook.md), and [staging evidence](docs/operations/staging-evidence.md) |
+| Delivery | [Implementation plan](docs/roadmap/implementation-plan.md), [backlog](docs/roadmap/backlog.md), and [delivery conventions](docs/roadmap/delivery-conventions.md) |
 | Acceptance | [Definition of Done](docs/roadmap/definition-of-done.md) and [production readiness checklist](docs/roadmap/production-readiness-checklist.md) |
 | Terminology and governance | [Glossary](docs/glossary.md) and [documentation governance](docs/documentation-governance.md) |
 
@@ -90,7 +90,7 @@ All V2 documentation is written in English.
 | `contracts/mqtt/` | [JSON Schemas and examples](contracts/mqtt/README.md) for device messages |
 | `tests/` | Contract tests and the MQTT boundary end-to-end check |
 | `deploy/compose/` | Local environment |
-| `deploy/kubernetes/` | [Kustomize base and overlays](deploy/kubernetes/README.md), not yet applied to a cluster |
+| `deploy/kubernetes/` | [Kustomize base and overlays](deploy/kubernetes/README.md); the staging overlay runs on the workstation cluster |
 | `docs/` | Requirements, architecture, decisions, and runbooks |
 | `legacy/` | The original prototype. Not built, not deployed, and not a specification |
 
@@ -126,12 +126,11 @@ Historical screenshots are preserved in the [legacy prototype gallery](docs/prod
 
 ## Next Phase
 
-Follow the [implementation plan](docs/roadmap/implementation-plan.md):
+Follow the [backlog](docs/roadmap/backlog.md), which orders the [implementation plan](docs/roadmap/implementation-plan.md):
 
-1. Review and accept [ADR 0011](docs/adr/0011-browser-session-transport.md) and [ADR 0012](docs/adr/0012-service-token-verification.md), and [ADR 0013](docs/adr/0013-mqtt-broker-delegated-auth.md), which record the choices made while building the Identity, Device, and MQTT slices.
-2. Resolve the cloud, managed PostgreSQL, ingress, secret manager, registry, and observability choices, then provision staging. Phase 1 and Phase 2 exit criteria require a staging deployment and are not met until then.
-3. Continue Phase 3: add the Virtual Device Simulator and Telemetry ingestion.
-4. Approve workload assumptions, capacity objectives, retention, and recovery objectives.
+1. Complete the Phase 1 and 2 staging evidence: a full smoke run with isolation checks, a browser sign-in, telemetry in Grafana Cloud, and a rollback.
+2. Finish Phase 3: the Device Outbox relay, Telemetry Service with MQTT ingestion, and the Virtual Device Simulator.
+3. Approve workload assumptions, capacity objectives, retention, and recovery objectives, and choose the production provider.
 
 ## Contributing
 

@@ -37,6 +37,7 @@ PowerHub V2 is being designed as a secure and observable platform based on Postg
 
 - [PowerHub V2 Requirements Index](requirements/powerhub-v2-requirements.md)
 - [Requirements Traceability](requirements/traceability.md)
+- [Traceability Register](requirements/traceability-register.csv)
 - [Product Scope](requirements/powerhub-v2/01-product-scope.md)
 - [Architecture Requirements](requirements/powerhub-v2/02-architecture-requirements.md)
 - [Backend Requirements](requirements/powerhub-v2/03-backend-requirements.md)
@@ -82,15 +83,19 @@ PowerHub V2 is being designed as a secure and observable platform based on Postg
 - [Threat Model](security/threat-model.md)
 - [Security Baseline](security/security-baseline.md)
 - [Operational Runbooks](runbooks/README.md)
+- [Staging Runbook](operations/staging-runbook.md)
+- [Staging Evidence](operations/staging-evidence.md)
 - [Implementation Plan](roadmap/implementation-plan.md)
+- [Delivery Backlog](roadmap/backlog.md)
+- [Delivery Conventions](roadmap/delivery-conventions.md)
 - [Definition of Done](roadmap/definition-of-done.md)
 - [Production Readiness Checklist](roadmap/production-readiness-checklist.md)
 
 ## Current project status
 
-PowerHub V2 is currently in the requirements and architecture-definition phase. The existing repository contains a legacy prototype that demonstrates several intended capabilities, but it is not the authoritative design for V2 and must not be treated as production-ready.
+PowerHub V2 is being implemented. Identity Service, Device Service with the MQTT boundary, and the React application are built and run on an interim staging environment; Telemetry and Notification are not built yet. The [implementation plan](roadmap/implementation-plan.md#status) shows the state of each phase, the [backlog](roadmap/backlog.md) orders what remains, and the [traceability register](requirements/traceability-register.csv) records the evidence for each requirement.
 
-The authoritative V2 scope is defined by the requirement documents linked above. Architecture, decision records, initial contract definitions, data strategy, assurance plans, runbook intent, and implementation sequencing are now documented. Machine-generated schemas, provider-specific commands, and implementation evidence will be added as the corresponding platform components are built.
+The legacy prototype under `legacy/` demonstrates several intended capabilities but is not the authoritative design for V2 and must not be treated as production-ready.
 
 ## Documentation principles
 
@@ -114,6 +119,7 @@ docs/
 |-- data/
 |-- testing/
 |-- runbooks/
+|-- operations/
 |-- security/
 `-- roadmap/
 ```

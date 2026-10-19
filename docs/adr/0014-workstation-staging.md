@@ -1,6 +1,7 @@
 # ADR 0014: Interim Staging on a Developer Workstation
 
-- Status: Proposed
+- Status: Accepted
+- Accepted: 2026-10-19 by @thanhtan2210
 - Date: 2026-10-03
 
 ## Context

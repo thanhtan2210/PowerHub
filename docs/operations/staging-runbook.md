@@ -146,6 +146,8 @@ USER_EMAIL=... USER_PASSWORD=... sh tests/integration/staging-smoke.sh
 
 In Grafana Cloud, *Explore* must show logs with `service_name="identity"`, the `http.server.request.duration` metric, and a trace for a sign-in request.
 
+Record the outcome, with the revision, in [staging evidence](staging-evidence.md) and update the affected rows of the [traceability register](../requirements/traceability-register.csv).
+
 ## 4. Release a new version
 
 1. Take the three digests from the *Images* workflow summary of the commit on `main`.
