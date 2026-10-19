@@ -27,6 +27,9 @@ Architecture Decision Records (ADRs) explain why PowerHub uses its major technic
 | [0012](0012-service-token-verification.md) | Verify tokens from cluster-internal JWKS and answer 404 for inaccessible resources | Accepted |
 | [0013](0013-mqtt-broker-delegated-auth.md) | Use Mosquitto locally with authentication delegated to Device Service | Accepted |
 | [0014](0014-workstation-staging.md) | Run interim staging on a developer workstation until a cloud provider is selected | Accepted |
+| [0015](0015-service-client-credentials.md) | Authenticate service-to-service calls with client-credentials tokens from Identity | Accepted |
+| [0016](0016-service-broker-identity.md) | Give services their own broker identities, authorised by Device Service | Accepted |
+| [0017](0017-outbox-delivery.md) | Keep Outbox delivery state per destination and share work through leases | Proposed |
 
 ## ADR workflow
 
