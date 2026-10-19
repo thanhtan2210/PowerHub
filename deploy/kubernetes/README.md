@@ -8,7 +8,7 @@ kubectl kustomize deploy/kubernetes/overlays/staging   # render and review
 
 ## Status
 
-These manifests render and are structurally validated in CI, but **have not been applied to a cluster**. The provider decisions in the [implementation plan](../../docs/roadmap/implementation-plan.md#pre-implementation-decisions) are still open, so every provider-specific value is a placeholder under the reserved `.invalid` domain:
+These manifests render and are structurally validated in CI. The `staging` overlay and `platform/staging` run on the interim workstation cluster of [ADR 0014](../../docs/adr/0014-workstation-staging.md), which sets real values for that environment; see the [staging runbook](../../docs/operations/staging-runbook.md). The `production` overlay has not been applied to a cluster. The provider decisions in the [implementation plan](../../docs/roadmap/implementation-plan.md#pre-implementation-decisions) are still open, so in the base and the production overlay every provider-specific value is a placeholder under the reserved `.invalid` domain:
 
 | Placeholder | Decided by |
 | --- | --- |

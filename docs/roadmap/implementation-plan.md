@@ -4,6 +4,18 @@
 
 This plan sequences PowerHub V2 so each phase produces a deployable, observable, and testable outcome. Dates and staffing are deliberately excluded until capacity and ownership are agreed. Implementation work must reference requirement IDs and relevant ADRs.
 
+## Status
+
+Last reviewed 2026-10-19, at `8a299be`. The [backlog](backlog.md) lists the open items in order, and the [traceability register](../requirements/traceability-register.csv) records evidence per requirement.
+
+| Phase | State |
+| --- | --- |
+| 0. Baseline and decisions | Baseline approved; ADRs 0001 to 0014 accepted; [delivery conventions](delivery-conventions.md) and the register exist. The legacy inventory and the capacity, retention, and production provider decisions are open. |
+| 1. Engineering and platform foundation | Built and deployed to interim workstation staging ([ADR 0014](../adr/0014-workstation-staging.md)). Telemetry backend and rollback evidence are open; see [staging evidence](../operations/staging-evidence.md). |
+| 2. Identity vertical slice | Built and deployed. A browser sign-in and the staging isolation checks are not yet recorded. |
+| 3. Device inventory and MQTT ingestion | Device inventory and the MQTT boundary are built. The Outbox relay, Telemetry Service, and simulator are not. |
+| 4 to 6 | Not started. |
+
 ## Phase 0: Baseline and decisions
 
 Outcome: the team can begin implementation without relying on undocumented architectural assumptions.
@@ -86,20 +98,20 @@ Exit criteria: the production readiness review accepts all mandatory evidence an
 
 ## Pre-implementation decisions
 
-The following choices remain intentionally open and must be recorded before their dependent work begins:
+The following choices must be recorded before their dependent work begins:
 
-| Decision | Needed before | Owner |
-| --- | --- | --- |
-| Cloud and managed Kubernetes provider | Platform provisioning | Architecture and operations |
-| Managed PostgreSQL offering, region, availability, backup, RPO, and RTO | Database provisioning | Data and operations |
-| MQTT broker product and device identity mechanism | MQTT slice | Architecture and security |
-| API gateway or ingress implementation | Public staging exposure | Platform and security |
-| Secret manager and workload identity mechanism | Staging secrets | Platform and security |
-| Observability storage and visualization backend | Operational acceptance | Operations |
-| Notification external channels, if any | Channel implementation | Product and security |
-| Expected load, growth, retention, and user concurrency | Capacity acceptance | Product and engineering |
-| Browser support and accessibility conformance target | Frontend acceptance | Product and frontend |
-| Legacy data disposition and cutover strategy | Migration rehearsal | Product and data |
+| Decision | Needed before | Owner | State |
+| --- | --- | --- | --- |
+| Cloud and managed Kubernetes provider | Platform provisioning | Architecture and operations | Open; interim workstation staging by ADR 0014 |
+| Managed PostgreSQL offering, region, availability, backup, RPO, and RTO | Database provisioning | Data and operations | Open; Neon free tier used for staging only |
+| MQTT broker product and device identity mechanism | MQTT slice | Architecture and security | Device identity and local broker decided in ADR 0013; staging and production broker open |
+| API gateway or ingress implementation | Public staging exposure | Platform and security | Kubernetes Ingress (ADR 0010); Traefik on staging |
+| Secret manager and workload identity mechanism | Staging secrets | Platform and security | Open; staging Secrets created by hand (ADR 0014) |
+| Observability storage and visualization backend | Operational acceptance | Operations | Grafana Cloud for staging (ADR 0014); production open |
+| Notification external channels, if any | Channel implementation | Product and security | Open |
+| Expected load, growth, retention, and user concurrency | Capacity acceptance | Product and engineering | Open |
+| Browser support and accessibility conformance target | Frontend acceptance | Product and frontend | Accessibility target WCAG 2.2 AA (NFR-UX-003); browser support open |
+| Legacy data disposition and cutover strategy | Migration rehearsal | Product and data | Open |
 
 ## Delivery rule
 
