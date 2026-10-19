@@ -72,10 +72,12 @@ Implemented so far: device registration, listing, read, rename, removal, and cre
 
 ## Internal endpoints
 
-Internal delivery endpoints are not internet routable. Each accepts a versioned integration envelope, authenticates the publisher, records Inbox state, and returns success for an already processed event.
+Internal endpoints are not internet routable. Event delivery endpoints accept a versioned integration envelope as `POST /internal/v1/events`, authenticate the publisher with a service token whose audience is the receiving service, record Inbox state, and return success for an already processed event ([ADR 0017](../adr/0017-outbox-delivery.md)).
 
 | Owner | Path family | Purpose |
 | --- | --- | --- |
+| Identity Service | `/internal/v1/oauth/token` | Client-credentials tokens for service-to-service calls ([ADR 0015](../adr/0015-service-client-credentials.md)) |
+| Device Service | `/internal/v1/mqtt/*` | Broker authentication and topic authorization ([ADR 0013](../adr/0013-mqtt-broker-delegated-auth.md)) |
 | Device Service | `/internal/v1/events/*` | Reported state and device-related event consumption |
 | Telemetry Service | `/internal/v1/events/*` | Device lifecycle event consumption |
 | Notification Service | `/internal/v1/events/*` | User-visible alert and status event consumption |

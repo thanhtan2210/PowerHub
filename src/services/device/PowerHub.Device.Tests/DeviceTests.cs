@@ -194,7 +194,9 @@ public sealed class DeviceTests(DeviceApp app)
 
         var events = await app.WithDbAsync(db => db.Outbox.Where(o => o.Subject == $"device/{device.Id}").OrderBy(o => o.Id).ToListAsync(Ct));
         Assert.Equal([EventTypes.Registered, EventTypes.MetadataChanged, EventTypes.Removed], events.Select(e => e.EventType));
-        Assert.All(events, message => Assert.Null(message.PublishedAt));
+        // Recording an event is part of the change; delivering it is the relay's job (ADR 0017).
+        var eventIds = events.Select(e => e.Id).ToList();
+        Assert.False(await app.WithDbAsync(db => db.Deliveries.AnyAsync(d => eventIds.Contains(d.MessageId), Ct)));
 
         var envelope = JsonDocument.Parse(events[0].Payload).RootElement;
         Assert.Equal(events[0].Id, envelope.GetProperty("eventId").GetGuid());

@@ -73,7 +73,10 @@ public sealed class AuditEvent
     public string? CorrelationId { get; set; }
 }
 
-/// <summary>An integration event committed with the business change that caused it (ADR 0003).</summary>
+/// <summary>
+/// An integration event committed with the business change that caused it (ADR 0003).
+/// The Outbox is the event log; delivery is tracked per destination (ADR 0017).
+/// </summary>
 public sealed class OutboxMessage
 {
     /// <summary>Also the event id consumers deduplicate on.</summary>
@@ -88,12 +91,26 @@ public sealed class OutboxMessage
     public string Payload { get; set; } = "";
 
     public DateTimeOffset OccurredAt { get; set; }
+}
+
+/// <summary>The delivery of one Outbox event to one configured destination (ADR 0017).</summary>
+public sealed class OutboxDelivery
+{
+    public string Destination { get; set; } = "";
+
+    public Guid MessageId { get; set; }
 
     public int Attempts { get; set; }
 
     public DateTimeOffset NextAttemptAt { get; set; }
 
-    public DateTimeOffset? PublishedAt { get; set; }
+    /// <summary>Set while a relay replica holds the delivery; another may claim it once this passes.</summary>
+    public DateTimeOffset? LockedUntil { get; set; }
+
+    public DateTimeOffset? DeliveredAt { get; set; }
+
+    /// <summary>Set when retrying cannot help; an operator inspects and resets the row.</summary>
+    public DateTimeOffset? DeadLetteredAt { get; set; }
 
     public string? LastError { get; set; }
 }

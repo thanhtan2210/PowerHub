@@ -55,7 +55,6 @@ public sealed class ChangeRecorder(DeviceDb db, TimeProvider time, IHttpContextA
             EventType = eventType,
             Subject = subject,
             OccurredAt = now,
-            NextAttemptAt = now,
             Payload = JsonSerializer.Serialize(
                 new
                 {
