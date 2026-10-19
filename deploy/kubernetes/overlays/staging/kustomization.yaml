@@ -13,13 +13,13 @@ resources:
 images:
   - name: powerhub/identity
     newName: ghcr.io/thanhtan2210/powerhub-identity
-    digest: sha256:eeed202278a0af05401fb59bfca9268595d72d94cd7bd835c5a32287103e0825
+    digest: sha256:f87b49150689d91ee892c51cf284f2c7bb088e374919ee679f824ea49bff0a13
   - name: powerhub/device
     newName: ghcr.io/thanhtan2210/powerhub-device
-    digest: sha256:7e315d1097f3f0400f323ae67a66bb041b6722d9a74bd6241113a3807f7ae280
+    digest: sha256:13fd5f54010e20e8d81e4c8998994fab90a1e46792ec9542ef57903f5a1e48d9
   - name: powerhub/frontend
     newName: ghcr.io/thanhtan2210/powerhub-frontend
-    digest: sha256:aa3f4b4fd80b3ac6176967a27741d15ad8b817be0a73dfc88df13837df83f39f
+    digest: sha256:221c704957a502a6f53a2f667f0ba77fccc94edcd430d8e555afaaf04233b6fb
 
 configMapGenerator:
   - name: identity-config
