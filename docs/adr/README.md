@@ -23,10 +23,10 @@ Architecture Decision Records (ADRs) explain why PowerHub uses its major technic
 | [0008](0008-api-contracts.md) | Treat APIs and events as versioned contracts | Accepted |
 | [0009](0009-observability.md) | Standardize telemetry with OpenTelemetry | Accepted |
 | [0010](0010-kubernetes-platform.md) | Use Kubernetes for staging and production | Accepted |
-| [0011](0011-browser-session-transport.md) | Hold the refresh token in an HttpOnly cookie and the access token in memory | Proposed |
-| [0012](0012-service-token-verification.md) | Verify tokens from cluster-internal JWKS and answer 404 for inaccessible resources | Proposed |
-| [0013](0013-mqtt-broker-delegated-auth.md) | Use Mosquitto locally with authentication delegated to Device Service | Proposed |
-| [0014](0014-workstation-staging.md) | Run interim staging on a developer workstation until a cloud provider is selected | Proposed |
+| [0011](0011-browser-session-transport.md) | Hold the refresh token in an HttpOnly cookie and the access token in memory | Accepted |
+| [0012](0012-service-token-verification.md) | Verify tokens from cluster-internal JWKS and answer 404 for inaccessible resources | Accepted |
+| [0013](0013-mqtt-broker-delegated-auth.md) | Use Mosquitto locally with authentication delegated to Device Service | Accepted |
+| [0014](0014-workstation-staging.md) | Run interim staging on a developer workstation until a cloud provider is selected | Accepted |
 
 ## ADR workflow
 
