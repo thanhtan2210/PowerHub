@@ -17,6 +17,7 @@ public sealed class AccessTokenIssuer(
 {
     public const string PermissionClaim = "permissions";
     public const string SessionClaim = "sid";
+    public const string ClientIdClaim = "client_id";
 
     private static readonly JsonWebTokenHandler Handler = new();
 
@@ -41,6 +42,32 @@ public sealed class AccessTokenIssuer(
                 [SessionClaim] = sessionFamilyId.ToString(),
                 ["role"] = roles,
                 [PermissionClaim] = permissions,
+            },
+            SigningCredentials = new SigningCredentials(keys.Current, SecurityAlgorithms.EcdsaSha256),
+        });
+
+        return new AccessToken(token, (int)lifetime.TotalSeconds);
+    }
+
+    /// <summary>
+    /// A token for one internal call target (ADR 0015). It names the calling service and
+    /// carries no roles or permissions; its audience is never the public API's.
+    /// </summary>
+    public AccessToken IssueServiceToken(string clientId, string audience, TimeSpan lifetime)
+    {
+        var now = time.GetUtcNow();
+        var token = Handler.CreateToken(new SecurityTokenDescriptor
+        {
+            Issuer = options.Value.Issuer,
+            Audience = audience,
+            IssuedAt = now.UtcDateTime,
+            NotBefore = now.UtcDateTime,
+            Expires = now.Add(lifetime).UtcDateTime,
+            Claims = new Dictionary<string, object>
+            {
+                [JwtRegisteredClaimNames.Sub] = clientId,
+                [ClientIdClaim] = clientId,
+                [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
             },
             SigningCredentials = new SigningCredentials(keys.Current, SecurityAlgorithms.EcdsaSha256),
         });

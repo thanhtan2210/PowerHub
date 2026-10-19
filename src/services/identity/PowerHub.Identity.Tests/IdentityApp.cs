@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -22,6 +23,11 @@ namespace PowerHub.Identity.Tests;
 public sealed class IdentityApp : WebApplicationFactory<Program>, IAsyncLifetime
 {
     public const string Password = "correct horse battery staple";
+
+    /// <summary>A registered service client, as Device Service would be configured (ADR 0015).</summary>
+    public const string ServiceClientId = "device-service";
+    public const string ServiceSecret = "test-service-secret-with-enough-entropy";
+    public const string ServiceAudience = "telemetry-service";
 
     private readonly string _server =
         Environment.GetEnvironmentVariable("POWERHUB_TEST_POSTGRES")
@@ -102,6 +108,10 @@ public sealed class IdentityApp : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Jwt:SigningKeyPath", _keyPath);
         builder.UseSetting("Email:FrontendBaseUrl", "https://app.test");
         builder.UseSetting("RateLimit:AuthPermitPerMinute", "100000");
+        builder.UseSetting(
+            $"ServiceClients:Clients:{ServiceClientId}:SecretHashes:0",
+            Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(ServiceSecret))));
+        builder.UseSetting($"ServiceClients:Clients:{ServiceClientId}:Audiences:0", ServiceAudience);
         builder.ConfigureServices(services => services.AddSingleton<IEmailSender>(Emails));
     }
 }

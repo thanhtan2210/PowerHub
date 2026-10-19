@@ -32,6 +32,26 @@ The generated contract is [`contracts/openapi/identity.json`](../../../contracts
 
 Access token claims: `sub`, `jti`, `sid` (session family), `role`, `permissions`, `iss`, `aud`, `exp`. Algorithm ES256, lifetime 15 minutes.
 
+## Service tokens
+
+Other services obtain tokens for internal calls with the OAuth 2.0 client credentials grant ([ADR 0015](../../../docs/adr/0015-service-client-credentials.md)):
+
+```http
+POST /internal/v1/oauth/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&client_id=device-service&client_secret=...&audience=telemetry-service
+```
+
+The answer is `{"access_token", "token_type": "Bearer", "expires_in"}`. Errors follow RFC 6749: `invalid_request`, `unsupported_grant_type`, `invalid_client` (`401`, the same for an unknown client and a wrong secret), and `invalid_target` for an audience the client may not request. The token's `aud` is the receiving service, `sub` and `client_id` name the caller, and it has no roles or permissions. Because its audience is never `powerhub-api`, public endpoints refuse it. The route is internal and absent from the public contract.
+
+Register a client by giving Identity the hex SHA-256 digest of its secret; the secret itself stays with the calling service:
+
+```sh
+secret=$(openssl rand -hex 32)
+printf %s "$secret" | sha256sum      # -> ServiceClients:Clients:<id>:SecretHashes:0
+```
+
 ## Database
 
 `identity_db`, snake_case, migrations in `PowerHub.Identity/Data/Migrations`. Tables: `users`, `roles`, `user_roles`, `role_claims` (permissions), `refresh_sessions`, `one_time_tokens`, `audit_events`, plus unused ASP.NET Core Identity tables.
@@ -61,6 +81,9 @@ dotnet PowerHub.Identity.dll create-admin <email>    # password from POWERHUB_AD
 | `Email:Host`, `Port`, `UseStartTls`, `Username`, `Password`, `From` | SMTP. With no host, messages are dropped with a warning |
 | `Email:FrontendBaseUrl` | Origin used in emailed links. Required |
 | `RateLimit:AuthPermitPerMinute` | Per client address, per replica (10) |
+| `ServiceClients:Clients:<id>:SecretHashes:<n>` | Hex SHA-256 digests of a service client's accepted secrets; two during rotation |
+| `ServiceClients:Clients:<id>:Audiences:<n>` | Receiving services the client may request tokens for |
+| `ServiceClients:TokenMinutes` | Service token lifetime (5) |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | Enables trace and metric export |
 
 ## Run and test
@@ -75,7 +98,7 @@ POWERHUB_TEST_POSTGRES="Host=localhost;Username=postgres;Password=postgres_local
 
 Without a local .NET SDK, `scripts/dotnet.sh` runs the same commands in the SDK container.
 
-Tests start the real service against a throwaway database and cover registration, enumeration resistance, lockout, token signing, rotation and reuse detection, concurrent refresh, recovery, administration, and rate limiting.
+Tests start the real service against a throwaway database and cover registration, enumeration resistance, lockout, token signing, rotation and reuse detection, concurrent refresh, recovery, administration, rate limiting, and service tokens.
 
 ## Not yet implemented
 
