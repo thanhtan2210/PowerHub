@@ -2,7 +2,7 @@
 # Build context: repository root.
 # The build stage runs on the builder's own architecture: the published output is
 # architecture-neutral IL, so only the runtime stage follows the target platform.
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0.401 AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0.402 AS build
 WORKDIR /repo
 
 COPY global.json Directory.Build.props Directory.Packages.props ./
@@ -17,7 +17,7 @@ RUN dotnet publish src/services/identity/PowerHub.Identity -c Release --no-resto
     -p:OpenApiGenerateDocuments=false -p:UseAppHost=false
 
 # Chiseled image: no shell or package manager, runs as a non-root user by default.
-FROM mcr.microsoft.com/dotnet/aspnet:10.0.12-noble-chiseled
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.13-noble-chiseled
 WORKDIR /app
 COPY --from=build /app .
 ENV ASPNETCORE_HTTP_PORTS=8080

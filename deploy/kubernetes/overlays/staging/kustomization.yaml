@@ -5,43 +5,53 @@ resources:
   - namespace.yaml
   - ../../base
 
-# The pipeline replaces these with immutable digests (INF-006):
-#   kustomize edit set image powerhub/identity=<registry>/identity@sha256:...
+# Interim staging on a developer workstation (ADR 0014): a k3d cluster behind a Tailscale
+# Funnel hostname. The values below are public; credentials are Kubernetes Secrets created
+# by hand, as described in docs/operations/staging-runbook.md.
+
+# Immutable digests from the Images workflow summary of the released commit (INF-006).
 images:
   - name: powerhub/identity
-    newName: registry.invalid/powerhub/identity
-    newTag: unset
+    newName: ghcr.io/thanhtan2210/powerhub-identity
+    digest: sha256:eeed202278a0af05401fb59bfca9268595d72d94cd7bd835c5a32287103e0825
   - name: powerhub/device
-    newName: registry.invalid/powerhub/device
-    newTag: unset
+    newName: ghcr.io/thanhtan2210/powerhub-device
+    digest: sha256:7e315d1097f3f0400f323ae67a66bb041b6722d9a74bd6241113a3807f7ae280
   - name: powerhub/frontend
-    newName: registry.invalid/powerhub/frontend
-    newTag: unset
+    newName: ghcr.io/thanhtan2210/powerhub-frontend
+    digest: sha256:aa3f4b4fd80b3ac6176967a27741d15ad8b817be0a73dfc88df13837df83f39f
 
 configMapGenerator:
   - name: identity-config
     behavior: merge
     literals:
       - ASPNETCORE_ENVIRONMENT=Staging
-      - Jwt__Issuer=https://staging.powerhub.invalid
-      - Email__FrontendBaseUrl=https://staging.powerhub.invalid
+      - Jwt__Issuer=https://thanhtan.taila0fc26.ts.net
+      - Email__FrontendBaseUrl=https://thanhtan.taila0fc26.ts.net
+      - Email__Host=smtp-relay.brevo.com
+      - Email__Port=587
+      - Email__Username=bc5584001@smtp-brevo.com
+      - Email__From=PowerHub <tanbanquyen@gmail.com>
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy.observability.svc:4317
+      - OTEL_SERVICE_NAME=identity
   - name: device-config
     behavior: merge
     literals:
       - ASPNETCORE_ENVIRONMENT=Staging
-      - Auth__Issuer=https://staging.powerhub.invalid
+      - Auth__Issuer=https://thanhtan.taila0fc26.ts.net
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy.observability.svc:4317
+      - OTEL_SERVICE_NAME=device
 
 patches:
+  # TLS terminates at the Funnel, outside the cluster, so the Ingress has no tls block.
   - target: { kind: Ingress, name: powerhub }
     patch: |-
+      - op: add
+        path: /spec/ingressClassName
+        value: traefik
       - op: replace
         path: /spec/rules/0/host
-        value: staging.powerhub.invalid
-      - op: add
-        path: /spec/tls
-        value:
-          - hosts: [staging.powerhub.invalid]
-            secretName: powerhub-tls
+        value: thanhtan.taila0fc26.ts.net
   - target: { kind: Deployment, name: identity }
     patch: |-
       - op: replace

@@ -18,7 +18,7 @@ services:
       DEVICE_SVC_PASSWORD: ${DEVICE_SVC_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./postgres/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+      - ../postgres/bootstrap.sh:/docker-entrypoint-initdb.d/bootstrap.sh:ro
     ports:
       - "127.0.0.1:5432:5432"
     healthcheck:

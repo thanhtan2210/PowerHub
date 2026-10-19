@@ -1,0 +1,50 @@
+# One-off Job that creates the first administrator. Not part of any kustomization:
+# the runbook substitutes IDENTITY_IMAGE and ADMIN_EMAIL and applies it by hand.
+# The password comes from the short-lived admin-bootstrap Secret.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-admin
+  namespace: powerhub-staging
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        # Shares the migrate Job's network policy: database access only.
+        app.kubernetes.io/name: identity-migrate
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: create-admin
+          image: IDENTITY_IMAGE
+          args: ["create-admin", "ADMIN_EMAIL"]
+          env:
+            - name: ConnectionStrings__IdentityDb
+              valueFrom:
+                secretKeyRef:
+                  name: identity-secrets
+                  key: runtime-connection-string
+            - name: POWERHUB_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: admin-bootstrap
+                  key: password
+            - name: Jwt__Issuer
+              value: https://not-used-by-this-command.invalid
+            - name: Email__FrontendBaseUrl
+              value: https://not-used-by-this-command.invalid
+          resources:
+            requests: { cpu: 100m, memory: 192Mi }
+            limits: { cpu: "1", memory: 384Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
