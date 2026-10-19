@@ -37,6 +37,26 @@ The delivery process must maintain one record per mandatory requirement with at 
 | Exception | Approved risk reference and expiry when applicable |
 | Last verified | Time and software revision of the evidence |
 
+## Register
+
+The register is [traceability-register.csv](traceability-register.csv): one row per requirement in baseline version 1.2, with the fields above plus `Level` (MUST, SHOULD, or MAY) and `Notes`. It was first populated on 2026-10-19 from the Identity, Device, and MQTT boundary slices and the first workstation staging deployment of `8a299be`.
+
+The `traceability` CI job runs `scripts/check-traceability.py`. It fails when a requirement has no row or more than one row, when a row names an undefined requirement, when a `Passed` row lacks evidence, environment, or revision, and when a verification reference no longer resolves. Verification references use these forms:
+
+| Form | Points to |
+| --- | --- |
+| `identity:Class.Method` | Test method in `src/services/identity/PowerHub.Identity.Tests` |
+| `device:Class.Method` | Test method in `src/services/device/PowerHub.Device.Tests` |
+| `contract:Class.Method` | Test method in `tests/contract/PowerHub.Contracts.Tests` |
+| `web:file#title` | Test title in a frontend test file |
+| `smoke:text` | Check in `tests/integration/staging-smoke.sh` |
+| `ci:text` | Step in a workflow under `.github/workflows` |
+| `file:path` | File or directory used as inspection evidence |
+
+Environments are `CI` (GitHub Actions on the named revision), `staging` (the workstation environment of ADR 0014), and `inspection` (review of the named files). A requirement that holds for the services built so far but must be re-verified for each new service stays `Pending` and says so in `Notes`.
+
+Update the register in the same change as the code, test, or deployment that changes its evidence.
+
 ## Rules
 
 - A design document is not proof that a requirement is implemented.
