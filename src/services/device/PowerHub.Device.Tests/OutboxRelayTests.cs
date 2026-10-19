@@ -261,7 +261,7 @@ public sealed class OutboxRelayTests(DeviceApp app)
         /// <summary>The response for the nth delivery attempt across all destinations.</summary>
         public Func<int, HttpStatusCode> Respond { get; set; } = _ => HttpStatusCode.Accepted;
 
-        public IReadOnlyCollection<Received> Received => _received;
+        public ConcurrentQueue<Received> Received => _received;
 
         public int TokenRequests => _tokenRequests;
 
