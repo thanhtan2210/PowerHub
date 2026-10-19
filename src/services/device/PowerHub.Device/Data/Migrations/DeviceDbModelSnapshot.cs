@@ -184,6 +184,55 @@ namespace PowerHub.Device.Data.Migrations
                     b.ToTable("devices", (string)null);
                 });
 
+            modelBuilder.Entity("PowerHub.Device.Data.OutboxDelivery", b =>
+                {
+                    b.Property<string>("Destination")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("destination");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("message_id");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
+                    b.Property<DateTimeOffset?>("DeadLetteredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dead_lettered_at");
+
+                    b.Property<DateTimeOffset?>("DeliveredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("delivered_at");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("last_error");
+
+                    b.Property<DateTimeOffset?>("LockedUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("locked_until");
+
+                    b.Property<DateTimeOffset>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_attempt_at");
+
+                    b.HasKey("Destination", "MessageId")
+                        .HasName("pk_outbox_deliveries");
+
+                    b.HasIndex("MessageId")
+                        .HasDatabaseName("ix_outbox_deliveries_message_id");
+
+                    b.HasIndex("NextAttemptAt")
+                        .HasDatabaseName("ix_outbox_deliveries_next_attempt_at")
+                        .HasFilter("delivered_at IS NULL AND dead_lettered_at IS NULL");
+
+                    b.ToTable("outbox_deliveries", (string)null);
+                });
+
             modelBuilder.Entity("PowerHub.Device.Data.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -191,24 +240,11 @@ namespace PowerHub.Device.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<int>("Attempts")
-                        .HasColumnType("integer")
-                        .HasColumnName("attempts");
-
                     b.Property<string>("EventType")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("event_type");
-
-                    b.Property<string>("LastError")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("last_error");
-
-                    b.Property<DateTimeOffset>("NextAttemptAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("next_attempt_at");
 
                     b.Property<DateTimeOffset>("OccurredAt")
                         .HasColumnType("timestamp with time zone")
@@ -219,10 +255,6 @@ namespace PowerHub.Device.Data.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("payload");
 
-                    b.Property<DateTimeOffset?>("PublishedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("published_at");
-
                     b.Property<string>("Subject")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -231,10 +263,6 @@ namespace PowerHub.Device.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_outbox_messages");
-
-                    b.HasIndex("NextAttemptAt")
-                        .HasDatabaseName("ix_outbox_messages_next_attempt_at")
-                        .HasFilter("published_at IS NULL");
 
                     b.ToTable("outbox_messages", (string)null);
                 });
@@ -257,6 +285,16 @@ namespace PowerHub.Device.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_device_members_devices_device_id");
+                });
+
+            modelBuilder.Entity("PowerHub.Device.Data.OutboxDelivery", b =>
+                {
+                    b.HasOne("PowerHub.Device.Data.OutboxMessage", null)
+                        .WithMany()
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_outbox_deliveries_outbox_messages_message_id");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Npgsql;
 using PowerHub.Device.Data;
 using PowerHub.Device.Features;
@@ -20,6 +21,29 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ChangeRecorder>();
 builder.Services.AddSingleton<MqttAuthMetrics>();
+
+// Integration events reach their consumers through the Outbox relay (ADR 0017), which
+// authenticates to them with service tokens from Identity (ADR 0015).
+builder.Services.AddPowerHubServiceTokens();
+var outbox = builder.Services.AddOptions<OutboxOptions>()
+    .BindConfiguration(OutboxOptions.Section)
+    .ValidateDataAnnotations()
+    .Validate(
+        OutboxOptions.HasValidDestinations,
+        "Each Outbox destination needs a name of at most 50 characters, an absolute BaseUrl, an Audience, and event types.")
+    .Validate<IOptions<ServiceAuthOptions>>(
+        (settings, auth) => settings.Destinations.Count == 0 || auth.Value.IsConfigured,
+        "ServiceAuth must be configured when Outbox destinations are.");
+if (!generatingOpenApi)
+{
+    outbox.ValidateOnStart();
+}
+
+builder.Services.AddHttpClient(OutboxRelay.HttpClientName).ConfigureHttpClient((services, client) =>
+    client.Timeout = TimeSpan.FromSeconds(services.GetRequiredService<IOptions<OutboxOptions>>().Value.TimeoutSeconds));
+builder.Services.AddSingleton<OutboxMetrics>();
+builder.Services.AddSingleton<OutboxRelay>();
+builder.Services.AddHostedService<OutboxRelayService>();
 
 builder.Services.AddDbContext<DeviceDb>(options => options
     .UseNpgsql(builder.Configuration.GetConnectionString("DeviceDb"))

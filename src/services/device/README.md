@@ -9,7 +9,8 @@ Owns the device inventory and decides what a user may do with each device. Ident
 | Register, list, read, rename, remove devices | Service identities at the broker (3d) |
 | Ownership and the `view` / `control` / `manage` permission model | Sharing a device with another user |
 | One-time device credentials with rotation | Locations, desired state, commands, schedules (Phase 4) |
-| Audit trail and Outbox records for every change | Outbox dispatcher (3d) |
+| Audit trail and Outbox records for every change | |
+| Outbox relay: delivery per destination with leases, retry, and dead letters | |
 | MQTT connection and topic authorization for the broker | |
 
 ## API
@@ -49,13 +50,25 @@ They take no user token and **must not be reachable from outside**: the gateway 
 | `device_members` | User id, permission, owner flag. The only path to a device |
 | `device_credentials` | SHA-256 digest of each credential, with revocation time |
 | `audit_events` | Actor, action, device, result, source, correlation id |
-| `outbox_messages` | Integration event envelopes awaiting delivery |
+| `outbox_messages` | Integration event envelopes: the event log |
+| `outbox_deliveries` | Delivery state of each event per destination: attempts, next attempt, lease, delivered or dead-lettered |
 
 User ids are opaque values from Identity; there is no cross-service foreign key. The service runs as `device_svc`, which cannot alter the schema or connect to another service's database.
 
 ## Events
 
-Written to the Outbox in the same transaction as the change, using the [integration envelope](../../../docs/api/integration-events.md): `device.registered.v1`, `device.metadata-changed.v1`, `device.removed.v1`. **Nothing dispatches them yet**; rows accumulate until the dispatcher is added with the first consumer.
+Written to the Outbox in the same transaction as the change, using the [integration envelope](../../../docs/api/integration-events.md): `device.registered.v1`, `device.metadata-changed.v1`, `device.removed.v1`.
+
+The Outbox relay delivers them ([ADR 0017](../../../docs/adr/0017-outbox-delivery.md)). For each configured destination it records a delivery for every subscribed event it has not yet seen, oldest first, so a consumer added later receives the history. Replicas claim due deliveries with `FOR UPDATE SKIP LOCKED` under a lease and `POST` each envelope to `<BaseUrl>/internal/v1/events` with a service token from Identity ([ADR 0015](../../../docs/adr/0015-service-client-credentials.md)). A `2xx` answer completes the delivery. Other answers retry with exponential backoff from 1 second to 10 minutes with jitter; a `4xx` other than `401`, `408`, and `429` dead-letters at once, anything else after `MaxAttempts`. Metrics: `powerhub.outbox.delivered`, `.failed`, `.dead_lettered`, `.pending`, `.dead_letters`, and `.oldest_pending_age`, each tagged by destination.
+
+No destination is configured until Telemetry Service exists, so the relay is idle and events wait in the log.
+
+To retry a dead-lettered delivery after fixing its cause:
+
+```sql
+UPDATE outbox_deliveries SET dead_lettered_at = NULL, attempts = 0, next_attempt_at = now()
+WHERE destination = '<name>' AND dead_lettered_at IS NOT NULL;
+```
 
 ## Configuration
 
@@ -65,6 +78,12 @@ Written to the Outbox in the same transaction as the change, using the [integrat
 | `Auth:JwksUrl` | Cluster-internal address of Identity's `/.well-known/jwks.json`. Required |
 | `Auth:Issuer` | Public origin Identity signs for. Required |
 | `Auth:Audience` | Expected audience (`powerhub-api`) |
+| `Outbox:Destinations:<name>:BaseUrl` | Internal base address of a consumer |
+| `Outbox:Destinations:<name>:Audience` | Its service token audience |
+| `Outbox:Destinations:<name>:EventTypes:<n>` | Event types it subscribes to |
+| `Outbox:PollSeconds`, `BatchSize`, `LeaseSeconds`, `MaxAttempts`, `TimeoutSeconds` | Relay tuning: 2, 50, 60, 20, 10 by default |
+| `ServiceAuth:TokenUrl` | Identity's `/internal/v1/oauth/token`. Required when a destination is configured |
+| `ServiceAuth:ClientId`, `ServiceAuth:ClientSecret` | This service's client registration at Identity |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | Enables trace and metric export |
 
 ## Run and test
@@ -74,6 +93,6 @@ cd deploy/compose && docker compose up --build      # whole stack
 dotnet PowerHub.Device.dll migrate                   # apply migrations (release step)
 ```
 
-Tests start the real service against a throwaway PostgreSQL database and sign their own tokens, standing in for Identity. They cover cross-user isolation, rejected tokens (wrong key, issuer, audience, expired, unsigned), ETag handling including concurrent writers, credential storage and rotation, the MQTT topic allow-list, and that each change writes exactly one audit and one Outbox record.
+Tests start the real service against a throwaway PostgreSQL database and sign their own tokens, standing in for Identity. They cover cross-user isolation, rejected tokens (wrong key, issuer, audience, expired, unsigned), ETag handling including concurrent writers, credential storage and rotation, the MQTT topic allow-list, that each change writes exactly one audit and one Outbox record, and the relay: delivery to every subscribed destination, backoff, dead letters, the attempt limit, lease expiry, token renewal, and two replicas delivering each event once.
 
 `tests/integration/mqtt-acl.sh` checks the same rules against the real broker in the Compose stack.

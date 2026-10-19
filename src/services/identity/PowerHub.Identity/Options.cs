@@ -61,6 +61,27 @@ public sealed class EmailOptions
     public string FrontendBaseUrl { get; set; } = "";
 }
 
+/// <summary>Services that may obtain client-credentials tokens for internal calls (ADR 0015).</summary>
+public sealed class ServiceClientOptions
+{
+    public const string Section = "ServiceClients";
+
+    [Range(1, 60)]
+    public int TokenMinutes { get; set; } = 5;
+
+    /// <summary>Registered calling services, by client id.</summary>
+    public IDictionary<string, ServiceClient> Clients { get; } = new Dictionary<string, ServiceClient>(StringComparer.Ordinal);
+}
+
+public sealed class ServiceClient
+{
+    /// <summary>Hex SHA-256 digests of the accepted secrets: two while a secret is rotated.</summary>
+    public IList<string> SecretHashes { get; } = [];
+
+    /// <summary>Receiving services this client may request tokens for.</summary>
+    public IList<string> Audiences { get; } = [];
+}
+
 public sealed class RateLimitOptions
 {
     public const string Section = "RateLimit";

@@ -29,6 +29,8 @@ AddValidatedOptions<JwtOptions>(JwtOptions.Section);
 AddValidatedOptions<SessionOptions>(SessionOptions.Section);
 AddValidatedOptions<EmailOptions>(EmailOptions.Section);
 AddValidatedOptions<RateLimitOptions>(RateLimitOptions.Section);
+AddValidatedOptions<ServiceClientOptions>(ServiceClientOptions.Section)
+    .Validate(ServiceTokenEndpoints.HasValidDigests, "ServiceClients secret digests must be hex SHA-256 values.");
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHttpContextAccessor();
@@ -148,6 +150,7 @@ app.MapGet("/.well-known/jwks.json", (SigningKeys keys) => Results.Text(keys.Jwk
     .ExcludeFromDescription();
 app.MapAuthEndpoints();
 app.MapUserEndpoints();
+app.MapServiceTokenEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
@@ -157,7 +160,7 @@ if (app.Environment.IsDevelopment())
 await app.RunAsync();
 return 0;
 
-void AddValidatedOptions<T>(string section)
+OptionsBuilder<T> AddValidatedOptions<T>(string section)
     where T : class
 {
     var options = builder.Services.AddOptions<T>().BindConfiguration(section).ValidateDataAnnotations();
@@ -165,6 +168,8 @@ void AddValidatedOptions<T>(string section)
     {
         options.ValidateOnStart();
     }
+
+    return options;
 }
 
 public partial class Program;

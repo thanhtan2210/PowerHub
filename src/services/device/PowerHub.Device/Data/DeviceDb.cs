@@ -14,6 +14,8 @@ public sealed class DeviceDb(DbContextOptions<DeviceDb> options) : DbContext(opt
 
     public DbSet<OutboxMessage> Outbox => Set<OutboxMessage>();
 
+    public DbSet<OutboxDelivery> Deliveries => Set<OutboxDelivery>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<DeviceRecord>(device =>
@@ -58,9 +60,17 @@ public sealed class DeviceDb(DbContextOptions<DeviceDb> options) : DbContext(opt
             outbox.Property(o => o.EventType).HasMaxLength(100);
             outbox.Property(o => o.Subject).HasMaxLength(100);
             outbox.Property(o => o.Payload).HasColumnType("jsonb");
-            outbox.Property(o => o.LastError).HasMaxLength(500);
-            // The dispatcher only ever scans unpublished rows that are due.
-            outbox.HasIndex(o => o.NextAttemptAt).HasFilter("published_at IS NULL");
+        });
+
+        modelBuilder.Entity<OutboxDelivery>(delivery =>
+        {
+            delivery.ToTable("outbox_deliveries");
+            delivery.HasKey(d => new { d.Destination, d.MessageId });
+            delivery.Property(d => d.Destination).HasMaxLength(50);
+            delivery.Property(d => d.LastError).HasMaxLength(500);
+            delivery.HasOne<OutboxMessage>().WithMany().HasForeignKey(d => d.MessageId).OnDelete(DeleteBehavior.Cascade);
+            // The relay only ever scans deliveries that are still pending.
+            delivery.HasIndex(d => d.NextAttemptAt).HasFilter("delivered_at IS NULL AND dead_lettered_at IS NULL");
         });
     }
 }
